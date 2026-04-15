@@ -35,50 +35,65 @@
       domain: 'API Testing',
       mcqs: [
         {
-          q: 'You send POST /api/orders with a valid body and receive 200 OK with the new order in the response body. What is the problem?',
+          q: 'POST /admin/api/2024-01/orders.json returns 201 with the new order object. Which additional check is essential to confirm the order was actually persisted?',
           options: [
-            '200 OK is acceptable — it signals success and the created resource is in the body',
-            '201 Created should be returned — it semantically signals a new resource was created',
-            '204 No Content is correct — the server should not return a body on creation',
-            '202 Accepted is correct — order creation is typically processed asynchronously',
-            'All of the above'
+            'Verify the response body contains a non-null id field',
+            'Confirm the HTTP status code is 201 Created',
+            'Send GET /admin/api/2024-01/orders/{id}.json and verify the order exists in the store',
+            'Verify the response time is under 500 ms'
           ]
         },
         {
-          q: 'Which of the following are valid test cases specifically targeting idempotency key behaviour on POST /api/payments?',
+          q: 'The Shopify Admin REST API returns the header X-Shopify-Shop-Api-Call-Limit: 39/40. What does this mean?',
           options: [
-            'Send the same request twice with the same idempotency key and verify the second call returns the original response without a duplicate charge',
-            'Send two requests with different idempotency keys and verify both create separate payment records',
-            'Send the same request with the same idempotency key after the documented key-expiry period and verify the API behaviour matches its spec',
-            'Send two different amounts with the same idempotency key and expect both to succeed',
-            'All of the above'
+            'You have 39 successful calls and 40 failed ones in the current window',
+            'You have 39 calls remaining before hitting the rate limit',
+            'You have used 39 of your 40 available calls — 1 call remains before throttling',
+            'Your API key has a permanent daily limit of 40 calls'
           ]
         },
         {
-          q: "GET /api/users/{id}/orders is called with User A's valid JWT but User B's {id}. The API returns 200 OK with User B's orders. Which vulnerability does this expose?",
+          q: 'A Shopify webhook for orders/fulfilled consistently does not fire when you fulfil a test order. What is the most useful first step?',
           options: [
-            "Broken Authentication — User A's token should have been rejected by the auth middleware",
-            'Mass Assignment — the API is accepting and processing parameters it should not expose',
-            'Insecure Direct Object Reference (IDOR) — authorisation is not enforced at the resource level',
-            "Privilege Escalation — User A has been granted elevated access by the server",
-            'All of the above'
+            'Check the Shopify Partners dashboard webhook logs for delivery failures and HTTP response codes',
+            'Verify your endpoint\'s SSL certificate is valid and trusted',
+            'Increase the webhook processing timeout on your server',
+            'Re-register the webhook with a different event topic to reset the delivery state'
+          ]
+        },
+        {
+          q: 'You test DELETE /admin/api/2024-01/products/9999999.json with a product ID that does not exist. Shopify returns 404. A junior QA marks this as "FAIL — expected 200". What is the correct expected status code?',
+          options: [
+            '200 OK — delete operations always confirm success with 200',
+            '204 No Content — the resource is already gone, so no content is returned',
+            '404 Not Found — the resource does not exist, which is the correct and expected response',
+            '422 Unprocessable Entity — the product ID format is invalid'
+          ]
+        },
+        {
+          q: '(Hard) You call POST /admin/api/2024-01/inventory_levels/adjust.json and receive 200 with the updated inventory level. Twenty seconds later, GET /admin/api/2024-01/inventory_levels.json?inventory_item_ids={id} returns the OLD value. No errors anywhere. What is the most likely explanation?',
+          options: [
+            'The POST response was served from cache and the adjustment never reached the Shopify server',
+            'There is read replica lag — the GET is served from a replica that has not yet received the write',
+            'Shopify queues inventory adjustments asynchronously and applies them within 5 minutes',
+            'The GET request is using an API version that does not support real-time inventory reads'
           ]
         }
       ],
       tasks: [
         {
-          title: 'Design Test Cases for a Search API',
-          scenario: 'GET /api/v1/products/search\n\nQuery params: q (search term), category, min_price, max_price, sort (asc|desc), page, limit\n\nReturns: { results: [...], total: 0, page: 1, has_more: false }',
-          question: 'Write 8 test cases. For each: input params → expected status → expected behaviour → what bug it catches.\n\nCover: happy path, empty results, boundary prices, invalid sort value, SQL injection in q, missing required params, and pagination edge cases.',
-          placeholder: 'TC-01: ...\nTC-02: ...',
-          evalPrompt: 'You are a senior QA engineer evaluating a search API test plan. Score 0–10: coverage of happy path, empty results, boundary prices, invalid sort value, SQL injection in q, missing required params, and pagination edge cases (5 pts); correctness of expected statuses and behaviors (3 pts); clarity and structure (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          title: 'Test Shopify Webhook Idempotency',
+          scenario: 'Your app receives orders/paid webhooks from Shopify. Shopify guarantees at-least-once delivery — the same webhook can arrive more than once. A merchant reports duplicate order records in your database roughly 1 in 200 deliveries.',
+          question: 'Write 3 test cases that verify your handler correctly prevents duplicate processing.\nFor each: input → expected response/behaviour → what bug it catches.',
+          placeholder: 'TC-01: Input: ...\nExpected: ...\nBug caught: ...',
+          evalPrompt: 'You are a senior QA engineer evaluating webhook idempotency test cases for a Shopify app. Score 0–10: idempotency key or unique constraint test (3 pts), duplicate webhook same payload test (3 pts), race condition or concurrent delivery scenario (2 pts), correctness of expected responses (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         },
         {
-          title: 'Debug a Flaky 401 on a Valid Token',
-          scenario: 'GET /api/v1/me returns 401 Unauthorized roughly 1 in every 15 requests. The JWT is valid, not expired, and signed correctly. The issue only happens in production under normal load. No recent auth service changes.',
-          question: 'List your top 3 hypotheses (e.g. clock skew, load balancer, caching).\n\nFor each: what evidence confirms it, what rules it out, and what you would check in logs or infra.\n\nWhat regression test cases would catch this in future?',
-          placeholder: 'Hypothesis 1: ...\nHypothesis 2: ...\nHypothesis 3: ...',
-          evalPrompt: 'You are a senior QA/backend engineer evaluating a debugging analysis for an intermittent 401 error. Score 0–10: quality of hypotheses (clock skew, load balancer sticky sessions, token validation race condition, caching) (4 pts), investigation methodology (3 pts), regression test cases proposed (2 pts), overall reasoning quality (1 pt). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          title: 'Debug a 422 on Shopify Order Creation',
+          scenario: 'POST /admin/api/2024-01/orders.json returns 422 Unprocessable Entity. Your request body is valid JSON. The same payload works on your development store but fails on the merchant\'s live store.',
+          question: 'List your 3 most likely causes.\nFor each: one API call or log check that confirms or rules it out.',
+          placeholder: 'Cause 1: ...\nHow to confirm: ...\n\nCause 2: ...\nHow to confirm: ...',
+          evalPrompt: 'You are a senior QA engineer evaluating API debugging for a Shopify 422 error. Expected causes: missing required fields (line_items/email), inventory not available at that location, invalid variant or product ID, billing address validation failure. Score 0–10: cause quality (5 pts), investigation method specificity (3 pts), overall reasoning (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         }
       ]
     },
@@ -89,50 +104,65 @@
       domain: 'Back-End Testing',
       mcqs: [
         {
-          q: 'A background job exits with code 0 but only 49,203 of 50,000 records are updated. No errors in logs. Which of the following would you investigate first?',
+          q: 'A Shopify app background job processes order_paid webhooks and updates a database. 97 of every 100 orders are updated. No errors in logs, job exits with code 0. What is the most likely root cause?',
           options: [
-            'The server ran out of memory mid-execution and records were silently dropped',
-            'A try/catch block is swallowing exceptions, allowing the job to skip records and continue',
-            'A WHERE clause or filter condition is silently excluding some records from the update',
-            'The database auto-rolled back some transactions due to a unique constraint violation',
-            'All of the above'
+            'The Shopify webhook is sending 3% of events to the wrong endpoint',
+            'A try/catch block in the job is swallowing exceptions, allowing the job to skip those orders and continue',
+            'The database is running out of connections and silently dropping 3% of writes',
+            'Shopify rate limits are causing 3% of the order lookups to fail silently'
           ]
         },
         {
-          q: 'A service has 100% unit test line coverage but fails in staging with incorrect output. What is the most precise reason this can happen?',
+          q: 'Your Shopify app has 100% unit test line coverage but fails in the merchant\'s production store with incorrect discount totals. What is the most precise reason this can happen?',
           options: [
-            'The unit tests contain bugs that mirror the same logic errors in production code',
-            'Staging uses different environment variables that the code does not handle correctly',
-            '100% line coverage confirms every line was executed — not that the logic is correct or that interactions between components work as expected',
-            'The CI pipeline ran tests in a different order than staging executes them',
-            'All of the above'
+            'The unit tests do not cover decimal rounding edge cases for multi-currency orders',
+            'Shopify\'s staging and production environments process discounts differently',
+            '100% line coverage confirms every line executed — not that the business logic is correct for all real Shopify price and discount combinations',
+            'The production app is using a different version of the Shopify API than the test environment'
           ]
         },
         {
-          q: 'Which two testing approaches provide the highest confidence that a refactored payment service behaves identically to the original?',
+          q: 'Which approach gives the highest confidence that a refactored Shopify discount engine produces identical results to the original?',
           options: [
-            'Integration tests that run the service against real dependencies — real database, real message queue, real downstream services',
-            'Smoke tests that verify the service starts and returns 200 on the health endpoint',
-            'Contract tests that verify the API request/response schema has not changed for all consuming services',
-            'Static analysis confirming the refactored code has the same cyclomatic complexity as before',
-            'All of the above'
+            'Running the existing unit tests — they all pass',
+            'Comparing outputs for the same inputs: original vs. refactored, across 100+ cart configurations with real Shopify discount combinations',
+            'Verifying that code complexity has not changed — same cyclomatic complexity',
+            'Deploying to a Shopify development store and manually testing 5 cart scenarios'
+          ]
+        },
+        {
+          q: 'A Shopify app test suite takes 45 minutes to run. The single highest-impact fix is:',
+          options: [
+            'Delete all tests that have ever failed intermittently',
+            'Reduce the number of assertions per test to speed up each test',
+            'Run tests that do not share state in parallel across multiple workers',
+            'Replace all integration tests with unit tests'
+          ]
+        },
+        {
+          q: '(Hard) A Shopify app processes refund/create webhooks. Under load testing at 50 concurrent refunds, 2–3 requests fail with a database deadlock error. What is the actual root cause?',
+          options: [
+            'The database server cannot handle 50 concurrent connections at this tier',
+            'Two transactions are acquiring locks on the same rows in opposite order',
+            'Shopify is sending duplicate refund webhooks that conflict at the database level',
+            'The connection pool is exhausted, causing requests to queue and time out'
           ]
         }
       ],
       tasks: [
         {
-          title: 'Investigate Silent Data Loss in a Kafka Consumer',
-          scenario: 'The order service emits ~500 order_created events/hour to a Kafka topic. The inventory service consumes the same topic and should update stock for each order. After a deploy, inventory updates ~460/hour. No errors in logs. Dead letter queue is empty. Consumer group lag is near zero.',
-          question: 'List your investigation steps in priority order.\n\nFor each step: what are you checking, why, what confirms your hypothesis, what rules it out.\n\nThen write 2 test cases that would catch this in a CI pipeline before it hits production.',
-          placeholder: 'Step 1: ...\nStep 2: ...',
-          evalPrompt: 'You are a senior backend/QA engineer evaluating a debugging approach for silent Kafka message loss. Score 0–10: quality of hypotheses (idempotency filter, partition assignment, deserialization silently failing, consumer offset issue) (4 pts), investigation methodology and priority ordering (3 pts), test cases proposed (2 pts), reasoning quality (1 pt). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          title: 'Investigate Silent Order Sync Failure',
+          scenario: 'A Shopify app syncs order_paid events to a warehouse system — ~500/hour. After deploying a discount calculation fix, only ~460/hour arrive at the warehouse. No errors in logs. Dead letter queue is empty.',
+          question: 'List your 3 investigation steps in priority order.\nWrite 2 test cases that would catch this in CI before it reaches production.',
+          placeholder: 'Step 1: ...\nStep 2: ...\nStep 3: ...\n\nTC-01: ...\nTC-02: ...',
+          evalPrompt: 'You are a senior backend/QA engineer evaluating a silent data loss investigation for a Shopify webhook sync. Expected answers: check for silent exception swallowing in new code, filter/condition change excluding some orders, idempotency logic over-filtering, offset or pagination bug. Score 0–10: investigation step quality (5 pts), CI test case quality (4 pts), overall reasoning (1 pt). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         },
         {
-          title: 'Spot the Regression Risk in a Pricing Refactor',
-          scenario: 'Original code applies discounts sequentially:\n  1. Loyalty discount: 10% off subtotal\n  2. Coupon: flat $5 off\n  3. Bulk: 5% off if qty > 10\n\nNew code: calculates all three discount amounts in parallel, then sums and subtracts once.\n\nAll unit tests pass.',
-          question: 'Is the new code mathematically equivalent to the original? Show your working with a concrete example (e.g. subtotal=$100, qty=12).\n\nWrite 3 test cases with specific inputs and expected outputs that would expose any difference between the two approaches.',
-          placeholder: 'Are they equivalent? ...\nTC-01: ...',
-          evalPrompt: 'You are a senior QA engineer evaluating a regression analysis for a pricing engine refactor. The correct answer is that the math is NOT equivalent — sequential discounts compound (percentage discounts apply to already-reduced prices) while parallel discount summing does not. Score 0–10: correct identification of the compounding vs parallel issue (4 pts), quality of test cases with correct expected values (4 pts), clarity of explanation (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          title: 'Spot the Regression in a Discount Refactor',
+          scenario: 'Original code applies discounts sequentially on a Shopify cart:\n  1. Loyalty: 10% off subtotal\n  2. Bulk: 20% off if qty > 5\n\nNew code calculates both discount amounts from the original price simultaneously, then subtracts the sum. All unit tests pass.',
+          question: 'Is the new code mathematically equivalent? Show with subtotal = $100, qty = 6.\nWrite 2 test cases with specific inputs and correct expected outputs for both approaches.',
+          placeholder: 'Equivalent? ...\n\n$100 example:\n  Original: ...\n  New: ...\n\nTC-01: Input: $... → Original expected: $... → New expected: $...',
+          evalPrompt: 'You are a senior QA engineer evaluating a pricing regression analysis. Correct answer: NOT equivalent. Original: $100×0.9=$90, $90×0.8=$72. New: $100-$10-$20=$70. Difference=$2. Score 0–10: correct identification of non-equivalence (3 pts), correct math for the $100 example (3 pts), test case quality with correct expected values for both approaches (4 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         }
       ]
     },
@@ -143,50 +173,65 @@
       domain: 'DB Log Reading',
       mcqs: [
         {
-          q: 'EXPLAIN ANALYZE shows: Seq Scan on a table where an index exists on the exact column in the WHERE clause. What is the most likely explanation?',
+          q: 'EXPLAIN ANALYZE on a Shopify orders query shows Seq Scan on a table where an index exists on the exact column in the WHERE clause. What is the most likely reason?',
           options: [
             'The index is corrupt and needs to be rebuilt with REINDEX',
-            'The query planner estimated that a full table scan is cheaper than the index scan given the current filter selectivity and data distribution',
-            'The developer forgot to commit the CREATE INDEX migration to production',
-            'SELECT * prevents index usage because it forces retrieval of all columns from the heap',
-            'All of the above'
+            'SELECT * forces a full heap scan because it retrieves all columns from the table',
+            'The query planner estimated a full table scan is cheaper because a large percentage of rows match the filter, making the index less selective',
+            'The index was created but autovacuum has not yet run to register it with the planner'
           ]
         },
         {
-          q: 'You see "deadlock detected" errors in production logs every few minutes during peak hours. Which two actions address the root cause?',
+          q: 'You see "deadlock detected" in production Postgres logs during Shopify order processing. What is the correct first action?',
           options: [
-            'Restart the database service immediately to clear all in-flight locks',
-            'Identify which tables and rows are involved in the deadlock using pg_locks or SHOW ENGINE INNODB STATUS',
-            'Review application code transaction ordering — two transactions acquiring locks in opposite order cause deadlocks',
-            'Increase deadlock_timeout from 1s to 10s to give transactions more time to resolve before failing',
-            'All of the above'
+            'Increase deadlock_timeout from 1 s to 10 s to give transactions more time to resolve',
+            'Restart the database to clear all in-flight transactions immediately',
+            'Identify which queries and tables are involved in the deadlock from the log detail, then fix the lock acquisition order in application code',
+            'Add a retry loop to the application so deadlocked transactions automatically recover'
           ]
         },
         {
-          q: 'A query runs in 8ms in staging (Index Scan, 500K rows) but 6,200ms in production (Seq Scan, 18M rows). The index exists in both environments. What is the most likely cause?',
+          q: 'A Shopify app query runs in 15 ms in staging (500K orders) but 8,500 ms in production (15M orders). Both environments have the same index. What is the most likely root cause?',
           options: [
-            'The staging statistics are actually stale — production\'s planner is making the correct decision for that data volume',
-            'The query planner chose a sequential scan because the index is not selective enough for the data distribution at 18M rows — ANALYZE may update the plan',
-            'Production is querying a read replica that does not have the index replicated from the primary',
-            'The index type in production is Hash, which is incompatible with the range operator used in the WHERE clause',
-            'All of the above'
+            'Staging runs a newer Postgres version with better query optimisation',
+            'The query planner in production chose a sequential scan because at 15M rows the data distribution makes the index less selective than at 500K rows',
+            'The production database is missing autovacuum, causing table bloat',
+            'Production reads from a replica that does not have the index replicated from the primary'
+          ]
+        },
+        {
+          q: 'A production log shows: lock wait timeout exceeded for UPDATE shopify_orders SET status=\'fulfilled\'. What does this indicate?',
+          options: [
+            'The shopify_orders table has too many rows and the UPDATE timed out during the full scan',
+            'A long-running transaction is holding a lock on that specific row, blocking the UPDATE from acquiring it',
+            'The database does not support concurrent UPDATEs on the same table at this volume',
+            'The connection pool has too many idle connections, starving the UPDATE of an available slot'
+          ]
+        },
+        {
+          q: '(Hard) A Shopify app runs this migration on a 20M-row orders table during business hours: ALTER TABLE orders ADD COLUMN notes TEXT NOT NULL DEFAULT \'none\'. It takes 47 minutes and causes full write downtime. What is the correct explanation?',
+          options: [
+            'Adding a TEXT column always requires rebuilding all data pages regardless of database version',
+            'In older Postgres versions, adding NOT NULL with a non-trivial DEFAULT requires a full table rewrite to populate the default on all existing rows, holding an exclusive lock throughout',
+            'The migration acquired a lock but removing NOT NULL would have allowed concurrent writes during the operation',
+            'The DEFAULT value \'none\' is a reserved SQL keyword that caused the migration engine to retry the statement multiple times'
           ]
         }
       ],
       tasks: [
         {
-          title: 'Diagnose This Production Log Sequence',
-          scenario: "14:32:01 [WARN]  Slow query 4,312ms — SELECT * FROM orders WHERE user_id=9182 AND status='PENDING'\n14:32:04 [ERROR] Deadlock detected — tables: orders, order_items\n14:32:04 [ERROR] Transaction rollback: order_id=78234 (lock wait timeout)\n14:32:05 [INFO]  Retry 1/3 for order_id=78234\n14:32:09 [ERROR] Max retries reached — order_id=78234 set to FAILED",
-          question: 'Walk through exactly what happened, step by step, in plain English.\n\nWhat is the root cause? What would you tell the developer to fix? Write 3 regression test cases that would catch this before it hits production again.',
-          placeholder: 'What happened: ...\nRoot cause: ...\nFix: ...\nTC-01: ...',
-          evalPrompt: 'You are a senior DB/QA engineer evaluating an analysis of a deadlock log. The correct interpretation: a slow query (missing index on status column) held locks; a concurrent transaction caused a deadlock; retry logic was exhausted and the order failed. Score 0–10: correct event sequence interpretation (3 pts), correct root cause identification (3 pts), developer report quality (2 pts), test case quality (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          title: 'Diagnose a Shopify App Deadlock Sequence',
+          scenario: "09:14:02 [WARN]  Slow query 3,891ms — SELECT * FROM shopify_orders WHERE shop_id=42 AND status='pending'\n09:14:05 [ERROR] deadlock detected — tables: shopify_orders, line_items\n09:14:05 [ERROR] Transaction rollback: order_sync_id=1847\n09:14:06 [INFO]  Retry 1/3 for order_sync_id=1847\n09:14:10 [ERROR] Max retries exhausted — order_sync_id=1847 set to FAILED",
+          question: 'Walk through what happened step by step in plain English.\nWhat is the root cause? One specific fix for the developer.\nWrite 2 regression test cases.',
+          placeholder: 'What happened: ...\nRoot cause: ...\nFix: ...\n\nTC-01: ...\nTC-02: ...',
+          evalPrompt: 'You are a senior DB/QA engineer evaluating deadlock log analysis for a Shopify app. Correct interpretation: slow query (missing index on status column) held row locks, concurrent sync transaction caused deadlock, retry logic exhausted, order failed. Root cause: missing index causing full table scan with long-held locks. Score 0–10: correct event sequence (3 pts), correct root cause (3 pts), developer fix quality (2 pts), regression test cases (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         },
         {
-          title: 'Pre-Migration Risk Assessment',
-          scenario: "Migration to run on Friday on orders table (50M rows, 500 writes/sec peak):\n\n  ALTER TABLE orders ADD COLUMN fulfilled_by VARCHAR(100) NOT NULL DEFAULT 'system';\n  CREATE INDEX CONCURRENTLY idx_orders_fulfilled ON orders(fulfilled_by);",
-          question: 'What are the top 3 risks of running this on a live 50M-row table?\n\nWrite a 5-point pre-migration checklist. Write a rollback plan. What would you verify in staging first?',
-          placeholder: 'Risk 1: ...\nRisk 2: ...\nChecklist: ...\nRollback: ...',
-          evalPrompt: 'You are a senior DBA/QA engineer evaluating a migration test plan. Key concerns: NOT NULL + DEFAULT on 50M rows causes table rewrite in older Postgres; CREATE INDEX CONCURRENTLY is correct but takes time; disk space for index; replication lag; live write traffic impact. Score 0–10: identification of key risks (4 pts), checklist quality (3 pts), rollback plan and staging validation strategy (3 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          title: 'Risk-Assess a Live Shopify Orders Migration',
+          scenario: "Migration to run during business hours on a 30M-row table:\n\n  ALTER TABLE shopify_orders ADD COLUMN fulfillment_source VARCHAR(50) NOT NULL DEFAULT 'manual';\n  CREATE INDEX CONCURRENTLY idx_orders_source ON shopify_orders(fulfillment_source);",
+          question: 'What are the top 2 risks of running this on a live table?\nWrite a 4-point pre-migration checklist.\nWhat is your rollback plan if something goes wrong?',
+          placeholder: 'Risk 1: ...\nRisk 2: ...\n\nChecklist:\n1. ...\n2. ...\n3. ...\n4. ...\n\nRollback: ...',
+          evalPrompt: 'You are a senior DBA/QA engineer evaluating a migration risk assessment. Key risks: NOT NULL+DEFAULT causes full table rewrite in Postgres < 11 (exclusive write lock), CREATE INDEX CONCURRENTLY avoids a write lock but still takes time and disk. Score 0–10: table rewrite risk identification (3 pts), disk space and replication lag awareness (2 pts), checklist quality (3 pts), rollback plan (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         }
       ]
     },
@@ -197,50 +242,65 @@
       domain: 'Test Automation',
       mcqs: [
         {
-          q: 'Your Playwright test fails in CI with "element not found" on a button that appears after an async API call. The test passes 100% locally. What is the correct fix?',
+          q: 'A Playwright test for Shopify checkout fails in CI with "element not found" on the Place Order button that appears after an async API call. It passes 100% locally. What is the correct fix?',
           options: [
-            'Add await page.waitForTimeout(5000) before the click to give CI sufficient time to load',
-            'Use await expect(page.getByTestId(\'submit-btn\')).toBeVisible() — it retries automatically until the element appears or the timeout is reached',
-            'Set a global timeout: 60000 in playwright.config.ts to allow extra time on slow CI runners',
-            'Wrap the interaction in a try/catch and retry the click 3 times with a 2s sleep between attempts',
-            'All of the above'
+            'Add await page.waitForTimeout(3000) before clicking to give CI extra time',
+            'Use await expect(page.getByTestId(\'place-order-btn\')).toBeVisible() — it retries automatically until the element appears or the timeout is reached',
+            'Set timeout: 60000 globally in playwright.config.ts to allow for slower CI runners',
+            'Wrap the click in a try/catch and retry up to 3 times with a 2-second sleep between attempts'
           ]
         },
         {
-          q: 'Which two selector strategies would remain stable after a UI redesign that renames CSS classes, restructures the DOM, and rewrites button labels?',
+          q: 'Which selector would remain stable after a Shopify theme update that renames CSS classes, restructures the DOM, and rewrites button labels?',
           options: [
-            'page.locator(\'.checkout-btn\') — CSS class selector',
-            'page.getByTestId(\'checkout-btn\') — data-testid attribute that the dev team controls independently of styling',
-            'page.getByRole(\'button\', { name: /confirm/i }) — ARIA role with a regex accessible name that tolerates minor label changes',
-            'page.locator(\'//div[@class="container"]/div[2]/button[1]\') — XPath positional selector',
-            'All of the above'
+            'page.locator(\'.add-to-cart-btn\') — CSS class selector',
+            'page.locator(\'//div[@class="product"]/button[1]\') — XPath positional selector',
+            'page.getByTestId(\'add-to-cart\') — data-testid attribute that the dev team controls independently of styling',
+            'page.locator(\'button:has-text("Add to cart")\') — text content selector'
           ]
         },
         {
-          q: 'Your suite has 40 flaky tests. Which of the following are valid root causes of test flakiness worth fully investigating before deleting any test?',
+          q: 'You have 30 flaky Playwright tests for a Shopify storefront. Before deleting any, what is the most valuable first action?',
           options: [
-            'Race conditions — the test does not properly wait for async state before asserting',
-            'Test interdependency — tests share mutable state or rely on a specific execution order',
-            'Environment inconsistency — the test behaves differently between local machines and CI infrastructure',
-            'Timing assumptions — hardcoded sleeps that fail when the system is under load or slower than expected',
-            'All of the above'
+            'Delete them immediately — flaky tests erode confidence and waste CI time',
+            'Mark all of them as skipped until you have time to investigate properly',
+            'Run each flaky test 5 times and check whether the same test consistently fails or fails inconsistently across runs',
+            'Add await page.waitForTimeout(2000) to each flaky test as a stopgap fix'
+          ]
+        },
+        {
+          q: 'A Shopify checkout E2E test passes in CI, but the team reports checkout is broken for mobile users. What is the most likely reason?',
+          options: [
+            'The test environment uses a different Shopify theme version than production',
+            'The test runs on a desktop viewport only and never tested mobile breakpoints or touch interactions',
+            'CI does not clear browser cookies between test runs, causing state leakage',
+            'CI runs tests sequentially instead of in parallel, masking timing-related failures'
+          ]
+        },
+        {
+          q: '(Hard) A Shopify automation suite has 52 tests that broke when the "Submit" button text changed to "Confirm order". What is the root cause?',
+          options: [
+            'The tests use text-based selectors like page.getByText(\'Submit\') — brittle to any copy change',
+            'The tests lack proper setup and teardown hooks, leaving shared state between runs',
+            'Tests share mutable global state and rely on a specific execution order',
+            'The CI pipeline does not pull the latest Shopify theme before running the suite'
           ]
         }
       ],
       tasks: [
         {
-          title: 'Write Automation for a Multi-Step Checkout',
-          scenario: 'Checkout flow:\n  Step 1: Cart page — items listed, "Proceed to Checkout" button [data-testid="checkout-btn"]\n  Step 2: Address form — name, street, city, postcode [data-testid="addr-name", "addr-street", "addr-city", "addr-postcode"]\n  Step 3: Payment — card number, expiry MM/YY, CVV [data-testid="card-num", "card-expiry", "card-cvv", "pay-btn"]\n  Step 4: Confirmation — "Order confirmed!" heading, order ID [data-testid="order-id"]',
-          question: 'Write a Playwright or Cypress test for:\n(a) Happy path — cart to confirmed order, assert order ID is displayed\n(b) Declined payment — assert user stays on payment page with an error message\n\nState your framework. Write clean code with correct assertions.',
-          placeholder: '// Framework: Playwright\n\ntest("checkout happy path", async ({ page }) => {\n  ...\n});',
-          evalPrompt: 'You are a senior SDET evaluating automation test code for a multi-step checkout flow. Score 0–10: correct use of async/await and framework-appropriate syntax (2 pts), use of data-testid selectors (2 pts), happy path completeness including order ID assertion (2 pts), negative test (declined payment) quality (2 pts), overall code readability and structure (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          title: 'Write a Playwright Test for Shopify Checkout',
+          scenario: 'Shopify storefront checkout flow:\n  Step 1: Product page — [data-testid="add-to-cart"]\n  Step 2: Cart — [data-testid="checkout-btn"]\n  Step 3: Address — [data-testid="addr-email"], "addr-name", "addr-street"\n  Step 4: Payment — [data-testid="card-num"], "card-expiry", "card-cvv", "pay-btn"]\n  Step 5: Confirmation — [data-testid="order-number"]',
+          question: 'Write a Playwright test for:\n(a) Happy path: product page to order confirmation — assert order number is visible\n(b) Declined card: assert user stays on the payment step with an error message visible',
+          placeholder: 'test("checkout - happy path", async ({ page }) => {\n  ...\n});\n\ntest("checkout - declined card", async ({ page }) => {\n  ...\n});',
+          evalPrompt: 'You are a senior SDET evaluating Playwright test code for a Shopify checkout flow. Score 0–10: correct async/await and Playwright syntax (2 pts), data-testid selectors used correctly (2 pts), happy path completeness with order number assertion (2 pts), declined card test quality and correct assertion (2 pts), overall code readability (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         },
         {
-          title: 'Diagnose and Fix a Brittle Test Suite',
-          scenario: 'An automation suite has these problems:\n  1. Tests pass locally, fail in CI ~25% of the time\n  2. Running tests in a different order changes results\n  3. Changing "Submit" button text to "Confirm" broke 52 tests\n  4. Full suite takes 55 minutes, blocking every deployment',
-          question: 'For each of the 4 problems: identify the exact root cause and write a specific, actionable fix (not just "write better tests").\n\nThen: what test pyramid ratio (unit/integration/e2e) would you recommend for this team going forward, and why?',
-          placeholder: 'Problem 1 — Root cause: ... Fix: ...\nProblem 2 — Root cause: ... Fix: ...',
-          evalPrompt: 'You are a senior SDET evaluating automation troubleshooting advice. Expected answers: CI flakiness → async waits / environment consistency; test order dependency → shared state / teardown / isolated test data; brittle text selectors → data-testid or role-based selectors; slow suite → parallel execution / test pyramid / selective runs. Score 0–10: correct root cause per problem (4 pts), specific actionable fixes (4 pts), test pyramid recommendation quality (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          title: 'Diagnose a Brittle Shopify Automation Suite',
+          scenario: 'Problems with the Shopify storefront test suite:\n  1. 30% of tests fail in CI but pass locally every time\n  2. Changing "Add to cart" to "Buy now" broke 40 tests\n  3. Running tests in alphabetical order changes results\n  4. Full suite takes 52 minutes, blocking every deployment',
+          question: 'For each of the 4 problems: exact root cause + one specific, actionable fix.\nWhat test pyramid ratio (unit/integration/E2E) would you recommend and why?',
+          placeholder: 'Problem 1 — Root cause: ... Fix: ...\nProblem 2 — Root cause: ... Fix: ...\nProblem 3 — Root cause: ... Fix: ...\nProblem 4 — Root cause: ... Fix: ...\n\nPyramid recommendation: ...',
+          evalPrompt: 'You are a senior SDET evaluating automation troubleshooting advice for a Shopify storefront suite. Expected: CI flakiness → async waits / missing env setup; text selector brittleness → data-testid or role selectors; test order dependency → shared state / teardown / isolated test data; slow suite → parallelisation / test pyramid restructuring. Score 0–10: correct root cause per problem (4 pts), specific actionable fixes (4 pts), test pyramid recommendation quality (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         }
       ]
     },
@@ -251,50 +311,65 @@
       domain: 'Root Cause Analysis',
       mcqs: [
         {
-          q: 'A production bug cannot be reproduced in staging after 4 hours of investigation. Real users are still affected. What are your best immediate next two actions?',
+          q: 'A Shopify production bug cannot be reproduced in staging after 3 hours. Real users are still affected. What is your most valuable immediate action?',
           options: [
             'Close the ticket as "cannot reproduce" and increase alert thresholds to reduce noise until it recurs',
+            'Roll back the last deployment immediately to remove the suspected change',
             'Add structured logging to the exact production code path and deploy to capture full context on the next occurrence',
-            'Systematically compare all environment differences — config values, data volume, feature flags, infrastructure — between staging and production',
-            'Roll back the last 5 deployments to identify which change introduced the regression',
-            'All of the above'
+            'Systematically compare all differences between staging and production — config values, data volume, feature flags'
           ]
         },
         {
-          q: 'Which of these correctly and completely applies 5-Whys to: "The payment service was down for 45 minutes"?',
+          q: 'Which 5-Whys chain correctly reaches the systemic root cause for "Shopify orders stopped syncing to the ERP"?',
           options: [
-            'Why → server crashed. Root cause: bad server. Fix: replace it.',
-            'Why → server crashed → Why → disk full → Why → logs not rotated → Why → no log rotation policy → Why → ops runbook does not include log rotation setup. Root cause: missing ops process.',
-            'Why → server crashed → Why → too much traffic. Root cause: need auto-scaling. Fix: add more instances.',
-            'Why → server crashed → Why → bad deployment. Root cause: need better code review. Fix: add mandatory approvals.',
-            'All of the above'
+            'Sync job crashed → server ran out of memory → root cause: add more RAM to the server',
+            'Sync job crashed → API rate limit hit → root cause: implement better throttling on API calls',
+            'API credentials expired → root cause: no automated alert on credential expiry and no rotation policy',
+            'Sync job crashed → disk full → logs not rotated → no rotation policy → ops runbook missing log management → root cause: incomplete ops process documentation'
           ]
         },
         {
-          q: 'A race condition occurs 1 in every 500 test runs. Which approach would most reliably surface it in CI without just hoping it appears?',
+          q: 'A Shopify checkout bug occurs on iOS 16 Safari only — works on Android Chrome and iOS 15 Safari. What is the most targeted first investigation step?',
           options: [
-            'Add Thread.sleep(500) between the two racing operations to widen the timing window for observation',
-            'Run the test 500 times sequentially in CI and fail the build if any single run fails',
-            'Use thread sanitizers, stress testing tools, or artificial concurrency injection to amplify the timing window — then audit the code for missing synchronisation primitives',
-            'Mark the test as xfail (expected failure) and document the race condition as a known issue for later',
-            'All of the above'
+            'Test on every device and browser combination in BrowserStack to map the full blast radius',
+            'Check whether any CSS or JavaScript used in checkout is unsupported or behaves differently in Safari iOS 16 specifically',
+            'Roll back the last Shopify theme update as the most likely cause',
+            'Test with JavaScript disabled to isolate whether the issue is client-side or server-side'
+          ]
+        },
+        {
+          q: 'A Shopify store\'s cart page loads in 1.2 s on desktop but 8.4 s on mobile. Which is the most likely single root cause?',
+          options: [
+            'Mobile devices have slower CPUs and cannot parse JavaScript as quickly as desktop',
+            'Mobile network latency is higher — 4G vs. Wi-Fi adds significant round-trip time',
+            'Large, unoptimised images are being downloaded at full desktop resolution on mobile devices',
+            'The Shopify CDN routes mobile traffic through geographically different edge nodes'
+          ]
+        },
+        {
+          q: '(Hard) A post-mortem reveals: config deployed without review → DB max_connections set to 2 → 89% payment errors for 47 minutes. Which is the most complete set of contributing factors?',
+          options: [
+            'No config review process + no config validation in CI + no staging test of the config change before production deployment',
+            'The developer made a typo and the database connection limit was configured too low',
+            'No automated tests for configuration values + PagerDuty alerts fired too slowly',
+            'The deployment pipeline lacked a rollback mechanism for configuration-only changes'
           ]
         }
       ],
       tasks: [
         {
-          title: 'RCA: iOS 16 Safari Checkout Bug',
-          scenario: 'Bug report: "Place Order button does nothing on iPhone 14 (iOS 16.4 Safari). No error shown to user. Works on: Chrome desktop, Firefox desktop, Android Chrome, iOS 15 Safari. Broken on: all iOS 16 Safari devices tested (3 users confirmed)."',
-          question: 'Apply 5-Whys to the technical root cause.\n\nThen apply 5-Whys separately to the PROCESS failure — why did QA not catch this before release?\n\nPropose 2 specific process changes that would prevent this class of bug in future.',
-          placeholder: 'Technical 5-Whys:\nWhy 1: ...\n\nProcess 5-Whys:\nWhy 1: ...\n\nProcess changes: ...',
-          evalPrompt: 'You are a senior QA engineer evaluating a root cause analysis for a platform-specific bug. The technical root cause is likely a CSS/JS change incompatible with Safari iOS 16 (e.g., passive event listeners, scroll behavior, or a specific CSS property). The process failure is lack of cross-browser/cross-OS test coverage in the regression suite. Score 0–10: technical 5-Whys quality and depth (3 pts), technical investigation specificity (2 pts), process failure 5-Whys quality (3 pts), prevention recommendations (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          title: 'RCA: Shopify Checkout Broken on iOS 16 Safari',
+          scenario: 'Bug report: "Place Order button does nothing on iPhone 14 (iOS 16.4, Safari). No error shown to the customer. Works on: Chrome desktop, Firefox, Android Chrome, iOS 15 Safari. Broken on: all iOS 16 Safari devices tested (4 users confirmed)."',
+          question: 'Apply 5-Whys to the technical root cause.\nApply 5-Whys separately to the PROCESS failure — why did QA not catch this before release?\nPropose 2 specific process changes to prevent this class of bug in future.',
+          placeholder: 'Technical 5-Whys:\nWhy 1: ...\nWhy 2: ...\n\nProcess 5-Whys:\nWhy 1: ...\nWhy 2: ...\n\nProcess changes:\n1. ...\n2. ...',
+          evalPrompt: 'You are a senior QA engineer evaluating a root cause analysis for a platform-specific Shopify checkout bug. Technical root cause: likely a CSS or JS change incompatible with Safari iOS 16 (passive event listeners, scroll behaviour, or a specific CSS property). Process failure: no cross-browser/cross-OS regression coverage for iOS Safari. Score 0–10: technical 5-Whys depth and specificity (3 pts), investigation approach (2 pts), process failure depth (3 pts), prevention recommendations quality (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         },
         {
-          title: 'Write a Post-Mortem Report',
-          scenario: 'Incident timeline:\n  14:32 — Config change pushed to production (no review)\n  14:34 — Payment error rate jumps from 0.1% → 89%\n  14:38 — PagerDuty alert fires\n  14:58 — Root cause found: DB max_connections set to 2 (was 50)\n  15:01 — Config reverted\n  15:19 — Full recovery\n\nImpact: 47 mins degraded. 1,240 failed transactions. ~$43,000 revenue impact.',
-          question: 'Write a complete post-mortem with: Summary, Timeline, Root Cause, Contributing Factors, Action Items (minimum 4, each with owner role and deadline).\n\nBe concise. This goes to engineering and leadership.',
-          placeholder: 'Summary: ...\nTimeline: ...\nRoot Cause: ...\nContributing Factors: ...\nAction Items: ...',
-          evalPrompt: 'You are a senior engineering manager evaluating a post-mortem report. Score 0–10: clear factual summary (1 pt), accurate timeline (2 pts), root cause AND contributing factors — not just "someone pushed bad config" but also: no config review process, no staging validation, no automated config validation (3 pts), impact statement with numbers (1 pt), quality and specificity of action items with owner roles and deadlines (3 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          title: 'Write a Post-Mortem for a Shopify App Outage',
+          scenario: 'Timeline:\n  14:32 — Config change pushed to production (no review)\n  14:34 — Payment error rate: 0.1% → 89%\n  14:38 — PagerDuty alert fires\n  14:58 — Root cause found: DB max_connections set to 2 (was 200)\n  15:01 — Config reverted\n  15:19 — Full recovery\n\nImpact: 47 min degraded. ~1,200 failed Shopify orders. ~£38,000 estimated revenue impact.',
+          question: 'Write a complete post-mortem: Summary, Timeline, Root Cause, Contributing Factors, Action Items (minimum 3, each with owner role and deadline).\n\nKeep it concise — this goes to the merchant and engineering leadership.',
+          placeholder: 'Summary: ...\n\nTimeline: ...\n\nRoot Cause: ...\n\nContributing Factors: ...\n\nAction Items:\n1. [Owner] [Deadline] ...',
+          evalPrompt: 'You are a senior engineering manager evaluating a post-mortem for a Shopify app outage. Score 0–10: clear factual summary (1 pt), accurate timeline (2 pts), root cause AND contributing factors — not just "bad config" but also: no review process, no CI config validation, no staging gate (3 pts), impact with numbers (1 pt), action item quality with owner role and deadline (3 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         }
       ]
     },
@@ -305,50 +380,65 @@
       domain: 'Complex Systems',
       mcqs: [
         {
-          q: 'Services: A → B → C. Service C degrades to p99 = 9s. Which single pattern most directly prevents this latency from making Service A completely unresponsive?',
+          q: 'Services: Shopify → Order App → Inventory App → ERP. The ERP degrades to p99 = 12 s. Which single pattern most directly prevents this from making Order App unresponsive?',
           options: [
-            "Add retry with exponential backoff on Service A's calls to Service B — failed calls will eventually succeed once C recovers",
-            "Implement a circuit breaker on Service B's calls to Service C — after N consecutive failures it opens and B immediately returns a cached fallback without waiting",
-            "Increase Service A's HTTP timeout on calls to Service B from 10s to 30s to accommodate C's degraded latency",
-            'Add a health check endpoint on Service C that Service B polls every second before making any calls',
-            'All of the above'
+            'Add retry with exponential backoff on Order App\'s calls to Inventory App — failed calls will eventually succeed once ERP recovers',
+            'Implement a circuit breaker on Inventory App\'s calls to ERP — after N failures it opens and returns a cached fallback immediately instead of waiting 12 s',
+            'Increase the HTTP timeout on Order App\'s calls to Inventory App from 10 s to 30 s to accommodate ERP degradation',
+            'Add a health check endpoint on ERP that Inventory App polls every second before making any calls'
           ]
         },
         {
-          q: "A user's order appears in Region A immediately after creation but is missing in Region B for 8–12 seconds with no errors in any logs. Which two explanations are consistent with this evidence?",
+          q: 'A Shopify order appears in the Order service immediately after creation but is missing in the ERP for 10–15 seconds with no errors in any logs. Which explanation is most consistent with this evidence?',
           options: [
-            "Region B's API has a bug that intermittently drops write operations under load",
-            'The system is eventually consistent — the write was accepted in Region A and is still replicating to Region B',
-            "The request was processed in Region A and returned before cross-region replication completed — a read-your-writes violation when reading from Region B",
-            "Region B's CDN is serving a stale cached API response that has not yet expired",
-            'All of the above'
+            'The ERP has an intermittent bug that drops write operations under load',
+            'The order event is replicating asynchronously — this is expected eventual consistency behaviour; the write succeeded and propagation is in progress',
+            'The Shopify webhook fired before the order was fully committed to the primary database',
+            'The ERP API is throttling the Order service and silently dropping some inbound requests'
           ]
         },
         {
-          q: 'What does "observability" mean in the context of distributed system testing, and why does it matter specifically for QA?',
+          q: 'What does "observability" specifically mean for a QA engineer testing a Shopify app with 5 microservices?',
           options: [
-            'The ability to monitor CPU and memory dashboards for each service in real time',
-            'The ability to understand a system\'s internal state purely from its external outputs — logs, metrics, and distributed traces — so that a production failure can be reconstructed without needing to reproduce it',
-            'The ability to run automated regression suites against each service in complete isolation from other services',
-            'The ability to toggle features on and off via feature flags without redeployment',
-            'All of the above'
+            'The ability to watch real-time CPU and memory dashboards for each service',
+            'The ability to toggle feature flags to isolate each service\'s behaviour independently',
+            'The ability to reconstruct exactly what happened in a production failure using only logs, metrics, and distributed traces — without needing to reproduce it',
+            'The ability to run automated regression tests against each service in complete isolation from others'
+          ]
+        },
+        {
+          q: 'During a Shopify checkout, Stripe confirms payment but the order is never created in the Order service. The most likely failure point is:',
+          options: [
+            'The payment service timed out before returning the success status to the checkout frontend',
+            'The event or message between the payment service and the order service was lost or never published',
+            'The order service was completely down when the payment confirmation arrived',
+            'The Shopify webhook fired before Stripe\'s payment confirmation was fully processed'
+          ]
+        },
+        {
+          q: '(Hard) A Shopify app\'s monolith is splitting into microservices. At 25% traffic cutover, some users see inconsistent order totals between the legacy and new systems. No errors in either. What is the root cause?',
+          options: [
+            'The 25% traffic split is random — some users hit both systems within the same session',
+            'The two systems calculate discounts using different rounding rules or apply promotions in a different order',
+            'The new microservice is not yet optimised for 25% production traffic load',
+            'Session cookies are routing some users inconsistently between the two systems'
           ]
         }
       ],
       tasks: [
         {
-          title: 'Trace a Failure Across 5 Services',
-          scenario: 'Platform: Auth → Cart → Payment → Order → Notification\n\nUser report: "I was charged $89. My bank shows a pending transaction. My cart wasn\'t cleared. No confirmation email. My Orders page shows nothing."\n\nPayment service log: "payment_id=pay_xK2m COMPLETED $89.00 at 14:32:01"',
-          question: 'Rank the services by suspicion (most likely failure point first) and explain your reasoning.\n\nWith no centralised tracing tool, how do you trace this across services using only per-service logs?\n\nWrite one E2E test case that would have caught this exact failure before it reached production.',
-          placeholder: 'Service ranking: ...\nInvestigation approach: ...\nE2E test: ...',
-          evalPrompt: 'You are a senior distributed systems engineer evaluating a failure trace analysis. The failure likely occurred between Payment and Order service (Order was not created despite successful payment), with Notification failing as a downstream consequence. Cart not clearing suggests the frontend listens for order confirmation. Score 0–10: correct identification of the failure point (3 pts), practical investigation approach using only per-service logs (2 pts), specific service-level queries (2 pts), E2E test case quality (3 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          title: 'Trace a Payment-to-Order Failure Across Services',
+          scenario: 'Stack: Shopify → Payment Service → Order Service → Notification Service\n\nMerchant report: "Customer was charged £89 via Stripe. Cart was not cleared. No confirmation email. Orders page shows nothing."\n\nPayment service log: "stripe_payment_id=pi_3xK2m COMPLETED £89.00 at 14:32:01"',
+          question: 'Rank the services by most likely failure point and explain your reasoning.\nWithout a centralised tracing tool, how do you correlate this across per-service logs?\nWrite one E2E test case that would have caught this exact failure before production.',
+          placeholder: 'Ranking:\n1. ... (reason)\n2. ...\n\nInvestigation approach: ...\n\nE2E test:\n  Input: ...\n  Steps: ...\n  Expected: ...',
+          evalPrompt: 'You are a senior distributed systems engineer evaluating a failure trace analysis for a Shopify payment-to-order gap. The failure is between Payment and Order service (payment succeeded, order never created). Cart not clearing and no email are downstream consequences. Score 0–10: correct failure localisation between Payment→Order (3 pts), log correlation approach without centralised tracing (2 pts), per-service log query specificity (2 pts), E2E test case quality (3 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         },
         {
-          title: 'Test Strategy for a Monolith → Microservices Migration',
-          scenario: 'A monolith handling auth, orders, payments, inventory, and notifications is being split into microservices over 3 months. During migration, both systems run simultaneously with traffic split via feature flags: 10% → 25% → 50% → 100%.',
-          question: 'What are the 3 biggest testing risks during this parallel-run phase? For each: why is it a risk, how you detect it, and what test mitigates it.\n\nHow do you validate data consistency between monolith and microservices during the split?',
-          placeholder: 'Risk 1: ...\nRisk 2: ...\nRisk 3: ...\nData consistency: ...',
-          evalPrompt: 'You are a senior platform QA engineer evaluating a migration test strategy. Key risks: data consistency during dual-write, session/auth state portability, feature parity gaps, rollback safety at each cutover percentage, and performance regression under split traffic. Score 0–10: identification and quality of the 3 biggest risks (4 pts), detection and mitigation quality per risk (4 pts), data consistency validation strategy (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          title: 'Test Strategy for a Shopify App Migration',
+          scenario: 'A Shopify app monolith handling orders, payments, and inventory is splitting into 3 microservices over 6 weeks. Traffic is split via feature flags: 10% → 25% → 50% → 100%.',
+          question: 'What are the 2 biggest testing risks during the parallel-run phase? For each: why it\'s a risk, how you detect it, what test mitigates it.\nHow do you validate data consistency between monolith and microservices at the 25% cutover?',
+          placeholder: 'Risk 1: ...\n  Why: ...\n  Detection: ...\n  Mitigation: ...\n\nRisk 2: ...\n  Why: ...\n  Detection: ...\n  Mitigation: ...\n\nData consistency validation: ...',
+          evalPrompt: 'You are a senior platform QA engineer evaluating a Shopify app migration test strategy. Key risks: data consistency during dual-write, business logic discrepancy (rounding/discount calculation differences), session/auth state portability, rollback safety at each cutover step. Score 0–10: risk identification quality (4 pts), detection and mitigation quality per risk (4 pts), data consistency validation strategy (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         }
       ]
     },
@@ -359,70 +449,84 @@
       domain: 'AI in QA',
       mcqs: [
         {
-          q: 'An LLM-powered support chatbot scores 96% accuracy on your test set. Which critical risks does this metric alone NOT address?',
+          q: 'An LLM-powered Shopify product description generator scores 94% accuracy on your test set. Which critical risk does this metric alone NOT address?',
           options: [
-            'Whether the bot correctly handles the most frequent support queries — the 96% covers this',
-            'Whether the bot can produce harmful, privacy-leaking, or adversarially-triggered outputs on edge cases absent from your test set',
-            'Whether the bot\'s outputs are consistent — the same input may produce different responses on different invocations',
-            'Whether the bot\'s API latency meets the product\'s 2-second SLA',
-            'All of the above'
+            'Whether the generator correctly uses the product title and category from the Shopify product data',
+            'Whether the generator handles products with no existing description or very short titles',
+            'Whether the generator produces harmful, hallucinated, or brand-unsafe outputs for edge-case products absent from your test set',
+            'Whether the generator is fast enough for the Shopify admin UI response time expectation'
           ]
         },
         {
-          q: 'What makes testing an LLM-powered feature fundamentally different from testing traditional deterministic software?',
+          q: 'What makes testing a Shopify AI product tagging feature fundamentally different from testing a traditional rule-based tagger?',
           options: [
-            'LLM inference is slow, making test suites take significantly longer to run',
-            'LLMs require cloud APIs, making local testing infrastructure impractical',
-            'LLMs are non-deterministic — the same input can produce different outputs across runs, making exact-match assertions invalid and requiring semantic or probabilistic evaluation',
-            'LLMs communicate via REST APIs, which require different test tooling than library-based code',
-            'All of the above'
+            'AI inference is slow, making the test suite take significantly longer to complete',
+            'AI requires cloud APIs, making fully local test infrastructure impractical',
+            'The AI is non-deterministic — the same product input can produce different tags on different runs, making exact-match assertions unreliable',
+            'AI models communicate via REST APIs which require different tooling than library-based code'
           ]
         },
         {
-          q: 'Which of the following are reliable approaches for evaluating whether a new LLM model version outperforms the current production model?',
+          q: 'A Shopify merchant reports the AI chatbot gave a customer incorrect return policy information. Which combination of tests would best catch this before production?',
           options: [
-            'Evaluate against a human-labelled golden dataset with defined success metrics such as precision, recall, or task completion rate',
-            'Use LLM-as-judge — a more capable model scores the outputs of the system under test against reference answers',
-            'Run an A/B test with real users, measuring a defined behavioural metric such as issue resolution rate or satisfaction score',
-            'Score outputs using semantic similarity embeddings between generated responses and curated reference answers',
-            'All of the above'
+            'Unit tests for the API endpoint that calls the LLM',
+            'A curated set of policy-related questions with expected answers, evaluated against the actual LLM outputs',
+            'Load testing the chatbot with 1,000 concurrent users to expose race conditions',
+            'Checking the chatbot\'s average response time against the 3-second SLA'
+          ]
+        },
+        {
+          q: 'Which is the most reliable way to evaluate whether a new LLM version outperforms the current one for Shopify customer support responses?',
+          options: [
+            'Ask the development team to read 100 sample responses and vote on which version is better',
+            'Compare average response times — the faster model is better suited for production',
+            'Use LLM-as-judge: a more capable model scores responses from both versions against curated reference answers with defined evaluation criteria',
+            'Count how many responses are under 200 words — conciseness signals better comprehension'
+          ]
+        },
+        {
+          q: '(Hard) An AI feature auto-generates Shopify discount codes based on customer purchase history. In testing, 3 of 1,000 generated codes are valid codes belonging to other customers\' histories. Which risk does this represent and what is the correct test strategy?',
+          options: [
+            'Performance risk — the feature is slow for edge cases; add load tests to surface the bottleneck',
+            'Privacy and data leakage risk — the AI is cross-contaminating user data; build an isolation test suite with synthetic per-user data and verify zero cross-user output for every generated code',
+            'Accuracy risk — some generated codes are wrong; add more representative training data to reduce the error rate',
+            'Security risk — discount codes are guessable by brute force; add rate limiting to the generation endpoint'
           ]
         }
       ],
       tasks: [
         {
-          title: 'Design a Test Plan for an AI Feature',
-          scenario: "Your product is adding \"Smart Summary\": reads a user's last 50 support tickets, generates a 3-sentence summary shown to agents before they respond.\n\nPotential failures: wrong user's data shown to agent, summary contains hallucinated details, summary times out after 12s, crashes on users with 0 tickets.",
-          question: 'Design a test plan covering:\n1. Functional cases (0 tickets, 1 ticket, 50 tickets, non-English tickets)\n2. Safety & privacy risks (PII leakage, hallucination, prompt injection)\n3. Performance SLA — what limits would you set?\n4. How do you evaluate summary quality at scale (you can\'t read 10,000 summaries manually)?',
-          placeholder: 'Functional cases: ...\nSafety risks: ...\nPerformance SLA: ...\nQuality at scale: ...',
-          evalPrompt: 'You are a senior AI QA engineer evaluating a test plan for an LLM-powered feature. Score 0–10: functional test case coverage including 0/1/50+ tickets and non-English tickets (2 pts), safety and privacy risk identification (PII leakage, hallucination, prompt injection, cross-user data) (3 pts), performance SLA definition (1 pt), automated quality evaluation strategy at scale (LLM-as-judge, human-labeled golden set, semantic similarity) (4 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          title: 'Test Plan for a Shopify AI Product Tagger',
+          scenario: 'Your Shopify app uses an LLM to auto-tag products for the merchant\'s store. It reads the product title, description, and category, then generates 5 tags per product.\n\nPotential failures: wrong tags for niche products, tags from another merchant\'s store appearing, slow response on large descriptions, crashes on products with no description.',
+          question: 'Design a test plan covering:\n1. Functional cases (no description, 1-word title, non-English product)\n2. Privacy risk (tags from another merchant\'s data leaking into this store)\n3. Performance: what SLA would you set for tag generation?\n4. How do you evaluate tag quality at scale without reading all outputs manually?',
+          placeholder: 'Functional cases: ...\n\nPrivacy test: ...\n\nPerformance SLA: ...\n\nQuality at scale: ...',
+          evalPrompt: 'You are a senior AI QA engineer evaluating a test plan for an LLM-powered Shopify product tagger. Score 0–10: functional case coverage including zero-description, short title, non-English product (2 pts), privacy/cross-merchant isolation test quality (3 pts), performance SLA definition (1 pt), scalable quality evaluation strategy such as LLM-as-judge, semantic similarity, or human-labelled golden set (4 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         },
         {
-          title: 'AI in Your QA Workflow — Real Experience',
-          scenario: 'AI tools (Claude, ChatGPT, Copilot) are being used in QA workflows for writing test cases, generating test data, analysing logs, writing scripts, and reviewing PRs.',
-          question: 'Answer honestly:\n\n1. How are you actually using AI in your QA work right now? Be specific: which tool, which task, which workflow.\n\n2. One concrete example where AI helped you — or failed you. What did it teach you?\n\n3. One specific scenario where AI should NOT replace a human QA engineer, and exactly why.',
-          placeholder: '1. Current AI usage: ...\n2. Concrete example: ...\n3. Where AI should not replace humans: ...',
-          evalPrompt: 'You are a senior QA practitioner evaluating a candidate\'s self-assessment of AI usage in QA. Score 0–10: specificity and credibility of current AI usage (3 pts) — vague answers score 0–1, specific workflow descriptions score 2–3; concrete example quality with real insight (3 pts); quality and specificity of where AI should NOT replace humans (3 pts) — "humans are needed for creativity" scores 1, specific scenarios like "exploratory testing for undefined behaviors" or "safety-critical system sign-off" score 3; overall honesty and self-awareness (1 pt). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          title: 'AI in Your Shopify QA Workflow',
+          scenario: 'AI tools (Claude, ChatGPT, Copilot) are being used in Shopify QA workflows for writing test cases, generating product and order test data, analysing Shopify API logs, and writing Playwright scripts.',
+          question: 'Answer honestly:\n1. Which AI tool do you use and for what specific Shopify QA task?\n2. One concrete example where AI helped or misled you in a QA context. What did you learn?\n3. One specific Shopify QA scenario where AI should NOT replace a human QA engineer, and exactly why.',
+          placeholder: '1. Tool and task: ...\n2. Concrete example: ...\n3. Should not replace humans for: ...',
+          evalPrompt: 'You are a senior QA practitioner evaluating a candidate\'s self-assessment of AI usage in Shopify QA. Score 0–10: specificity of AI usage in a Shopify QA context (3 pts) — vague answers 0–1, specific workflow 2–3; concrete example with real insight (3 pts); specific Shopify scenario where AI should not replace humans such as exploratory testing, production incident triage, edge case discovery in real merchant data (3 pts); honesty and self-awareness (1 pt). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         }
       ]
     }
   ];
 
   /* ─────────────────────────────────────────────────────────────
-     ENCODED ANSWER KEY
-     Formula: _K[di][mi] = answer XOR ((di*31 + mi*17 + 0xF3) & 0xFF)
-     Decode:  answer      = _K[di][mi] XOR ((di*31 + mi*17 + 0xF3) & 0xFF)
+     ENCODED ANSWER KEY  (single-answer, index-based)
+     Formula: _K[di][mi] = answer_index XOR ((di*31 + mi*17 + 0xF3) & 0xFF)
+     Decode:  answer_index = _K[di][mi] XOR ((di*31 + mi*17 + 0xF3) & 0xFF)
+     Index: 0=A, 1=B, 2=C, 3=D
      ───────────────────────────────────────────────────────────── */
-  /* Bitmask encoding: bit0=A, bit1=B, bit2=C, bit3=D, bit4=E(all)
-     Single answer B=2, C=4, A+C=5, B+C=6, All-of-above(E)=16        */
   var _K = [
-    [241,  1, 17],   /* domain 0: API Testing           B(2), A+C(5), C(4)      */
-    [ 20, 39, 49],   /* domain 1: Back-End Testing      B+C(6), C(4), A+C(5)    */
-    [ 51, 68, 81],   /* domain 2: DB Log Reading        B(2), B+C(6), B(2)      */
-    [ 82,103, 98],   /* domain 3: Test Automation       B(2), B+C(6), E/all(16) */
-    [105,130,149],   /* domain 4: Root Cause Analysis   B+C(6), B(2), C(4)      */
-    [140,153,178],   /* domain 5: Complex Systems       B(2), B+C(6), B(2)      */
-    [171,186,223]    /* domain 6: AI in QA              B+C(6), C(4), E/all(16) */
+    [241,  6, 21, 36, 54],   /* domain 0: API Testing           C,C,A,C,B */
+    [ 19, 33, 53, 71, 87],   /* domain 1: Back-End Testing      B,C,B,C,B */
+    [ 51, 64, 82,101,116],   /* domain 2: DB Log Reading        C,C,B,B,B */
+    [ 81, 99,112,130,148],   /* domain 3: Test Automation       B,C,C,B,A */
+    [109,131,144,160,179],   /* domain 4: Root Cause Analysis   C,D,B,C,A */
+    [143,158,178,192,211],   /* domain 5: Complex Systems       B,B,C,B,B */
+    [175,188,206,226,240]    /* domain 6: AI in QA              C,C,B,C,B */
   ];
 
   function _dec(di, mi) {
@@ -518,7 +622,7 @@
   /* ── Render domain ─────────────────────────────────────────── */
   function renderDomain(idx) {
     var domain = _D[idx];
-    _sel = new Array(domain.mcqs.length).fill(0);
+    _sel = new Array(domain.mcqs.length).fill(-1);
 
     /* Progress */
     document.getElementById('progressFill').style.width   = ((idx / _D.length) * 100) + '%';
@@ -553,7 +657,7 @@
         lbl.className = 'mcq-option';
 
         var cb    = document.createElement('input');
-        cb.type   = 'checkbox';
+        cb.type   = 'radio';
         cb.name   = 'mcq_' + qi;
         cb.value  = oi;
 
@@ -564,29 +668,29 @@
         var span = document.createElement('span');
         span.textContent = opt;
 
-        /* Visually distinguish the "All of the above" option (always index 4) */
-        if (oi === 4) { lbl.style.borderTop = '1px solid var(--border-md)'; }
-
         lbl.appendChild(cb);
         lbl.appendChild(marker);
         lbl.appendChild(span);
         opts.appendChild(lbl);
 
-        cb.addEventListener('change', (function (capturedQi, capturedOi, capturedLbl, capturedMarker) {
+        cb.addEventListener('change', (function (capturedQi, capturedOi, capturedLbl, capturedOpts) {
           return function () {
             if (this.checked) {
-              _sel[capturedQi] = (_sel[capturedQi] || 0) | (1 << capturedOi);
+              _sel[capturedQi] = capturedOi;
+              capturedOpts.querySelectorAll('.mcq-option').forEach(function (l) {
+                l.classList.remove('selected');
+                var m = l.querySelector('.mcq-marker');
+                if (m) { m.style.background = ''; m.style.color = ''; }
+              });
               capturedLbl.classList.add('selected');
-              capturedMarker.style.background = 'var(--white)';
-              capturedMarker.style.color = 'var(--text-inv)';
-            } else {
-              _sel[capturedQi] = (_sel[capturedQi] || 0) & ~(1 << capturedOi);
-              capturedLbl.classList.remove('selected');
-              capturedMarker.style.background = '';
-              capturedMarker.style.color = '';
+              var selMarker = capturedLbl.querySelector('.mcq-marker');
+              if (selMarker) {
+                selMarker.style.background = 'var(--white)';
+                selMarker.style.color = 'var(--text-inv)';
+              }
             }
           };
-        })(qi, oi, lbl, marker));
+        })(qi, oi, lbl, opts));
       });
 
       block.appendChild(qnum);
@@ -720,12 +824,12 @@
 
     if (isAuto) showFlash('Time\'s up — domain auto-submitted.');
 
-    /* Grade MCQs — _dec returns the correct-answer bitmask; _sel[qi] is the
-       candidate's selected bitmask. Exact match required for full marks.    */
+    /* Grade MCQs — _dec returns the correct answer index (0=A,1=B,2=C,3=D).
+       _sel[qi] is the index the candidate selected (-1 = no answer).        */
     var mcqResults = domain.mcqs.map(function (mcq, qi) {
-      var selMask  = _sel[qi] || 0;
-      var corrMask = _dec(_idx, qi);
-      return { selectedMask: selMask, correctMask: corrMask, isCorrect: selMask === corrMask };
+      var selIdx  = _sel[qi];
+      var corrIdx = _dec(_idx, qi);
+      return { selectedIdx: selIdx, correctIdx: corrIdx, isCorrect: selIdx === corrIdx };
     });
 
     /* Collect task answers */
