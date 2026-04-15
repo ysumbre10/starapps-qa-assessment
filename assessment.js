@@ -35,30 +35,33 @@
       domain: 'API Testing',
       mcqs: [
         {
-          q: 'A client sends POST /orders and the server creates a new order. Which HTTP status code is the most semantically correct response?',
+          q: 'You send POST /api/orders with a valid body and receive 200 OK with the new order in the response body. What is the problem?',
           options: [
-            '200 OK — request succeeded',
-            '201 Created — resource was created',
-            '202 Accepted — request is being processed',
-            '204 No Content — success with no body'
+            '200 OK is acceptable — it signals success and the created resource is in the body',
+            '201 Created should be returned — it semantically signals a new resource was created',
+            '204 No Content is correct — the server should not return a body on creation',
+            '202 Accepted is correct — order creation is typically processed asynchronously',
+            'All of the above'
           ]
         },
         {
-          q: 'You send the exact same POST /payments request twice using the same idempotency_key. What should the server return on the second call?',
+          q: 'Which of the following are valid test cases specifically targeting idempotency key behaviour on POST /api/payments?',
           options: [
-            '400 Bad Request — duplicate submission detected',
-            '409 Conflict — the resource already exists',
-            '200 OK with the original response — idempotent replay',
-            '422 Unprocessable Entity — semantically invalid'
+            'Send the same request twice with the same idempotency key and verify the second call returns the original response without a duplicate charge',
+            'Send two requests with different idempotency keys and verify both create separate payment records',
+            'Send the same request with the same idempotency key after the documented key-expiry period and verify the API behaviour matches its spec',
+            'Send two different amounts with the same idempotency key and expect both to succeed',
+            'All of the above'
           ]
         },
         {
-          q: 'Which of these is an IDOR (Insecure Direct Object Reference) test case for GET /api/users/{id}/orders?',
+          q: "GET /api/users/{id}/orders is called with User A's valid JWT but User B's {id}. The API returns 200 OK with User B's orders. Which vulnerability does this expose?",
           options: [
-            'Send the request without an Authorization header and expect 401',
-            'Send the request with an expired JWT and expect 401',
-            "Send the request with User A's valid token but User B's {id} and expect 403",
-            'Send the request with a malformed {id} value like "abc" and expect 400'
+            "Broken Authentication — User A's token should have been rejected by the auth middleware",
+            'Mass Assignment — the API is accepting and processing parameters it should not expose',
+            'Insecure Direct Object Reference (IDOR) — authorisation is not enforced at the resource level',
+            "Privilege Escalation — User A has been granted elevated access by the server",
+            'All of the above'
           ]
         }
       ],
@@ -86,30 +89,33 @@
       domain: 'Back-End Testing',
       mcqs: [
         {
-          q: 'A background job runs nightly and processes 50,000 records. It exits with code 0 (success) but only 49,203 records are updated in the DB. No errors in logs. What is the most likely cause?',
+          q: 'A background job exits with code 0 but only 49,203 of 50,000 records are updated. No errors in logs. Which of the following would you investigate first?',
           options: [
-            'The job ran out of memory and was silently killed mid-execution',
-            'A try/catch block is swallowing exceptions, causing silent skips',
-            'The database ran out of connections and dropped some writes',
-            'The job processed duplicates, reducing the effective update count'
+            'The server ran out of memory mid-execution and records were silently dropped',
+            'A try/catch block is swallowing exceptions, allowing the job to skip records and continue',
+            'A WHERE clause or filter condition is silently excluding some records from the update',
+            'The database auto-rolled back some transactions due to a unique constraint violation',
+            'All of the above'
           ]
         },
         {
-          q: 'Which test type gives the highest confidence that a newly refactored payment service still works correctly end-to-end?',
+          q: 'A service has 100% unit test line coverage but fails in staging with incorrect output. What is the most precise reason this can happen?',
           options: [
-            'Unit tests — they run fast and isolate every function',
-            'Contract tests — they verify the API schema hasn\'t changed',
-            'Integration tests — they test the service against real dependencies',
-            'Smoke tests — they verify the service starts and returns 200'
+            'The unit tests contain bugs that mirror the same logic errors in production code',
+            'Staging uses different environment variables that the code does not handle correctly',
+            '100% line coverage confirms every line was executed — not that the logic is correct or that interactions between components work as expected',
+            'The CI pipeline ran tests in a different order than staging executes them',
+            'All of the above'
           ]
         },
         {
-          q: 'A service has 100% unit test coverage but still fails in staging. What is the most likely reason?',
+          q: 'Which two testing approaches provide the highest confidence that a refactored payment service behaves identically to the original?',
           options: [
-            'The unit tests were written incorrectly and contain bugs',
-            '100% coverage measures lines executed, not correctness of behaviour',
-            'Staging uses a different OS than development, causing runtime differences',
-            'The CI pipeline skipped some test files due to a config error'
+            'Integration tests that run the service against real dependencies — real database, real message queue, real downstream services',
+            'Smoke tests that verify the service starts and returns 200 on the health endpoint',
+            'Contract tests that verify the API request/response schema has not changed for all consuming services',
+            'Static analysis confirming the refactored code has the same cyclomatic complexity as before',
+            'All of the above'
           ]
         }
       ],
@@ -137,30 +143,33 @@
       domain: 'DB Log Reading',
       mcqs: [
         {
-          q: 'EXPLAIN ANALYZE shows: "rows=12 (actual rows=94,830)". What does this mean and what should you do?',
+          q: 'EXPLAIN ANALYZE shows: Seq Scan on a table where an index exists on the exact column in the WHERE clause. What is the most likely explanation?',
           options: [
-            'The query returned 94,830 rows instead of the 12 expected — there is a logic bug in the WHERE clause',
-            'The query planner underestimated the row count — run ANALYZE to update table statistics',
-            'The index is corrupt — the query planner used the wrong index and needs to be rebuilt',
-            'The query is correct — planner estimates are always conservative and should be ignored'
+            'The index is corrupt and needs to be rebuilt with REINDEX',
+            'The query planner estimated that a full table scan is cheaper than the index scan given the current filter selectivity and data distribution',
+            'The developer forgot to commit the CREATE INDEX migration to production',
+            'SELECT * prevents index usage because it forces retrieval of all columns from the heap',
+            'All of the above'
           ]
         },
         {
-          q: 'You see this in production logs:\n"lock wait timeout exceeded; try restarting transaction"\n\nWhat is happening and what is the correct first response?',
+          q: 'You see "deadlock detected" errors in production logs every few minutes during peak hours. Which two actions address the root cause?',
           options: [
-            'The database server ran out of RAM — restart the DB service',
-            'A long-running transaction is holding a lock that another transaction is waiting for — identify and investigate the blocking query',
-            'The network between app and DB is slow — increase lock_wait_timeout in config',
-            'The table has too many indexes — drop unused indexes to reduce write contention'
+            'Restart the database service immediately to clear all in-flight locks',
+            'Identify which tables and rows are involved in the deadlock using pg_locks or SHOW ENGINE INNODB STATUS',
+            'Review application code transaction ordering — two transactions acquiring locks in opposite order cause deadlocks',
+            'Increase deadlock_timeout from 1s to 10s to give transactions more time to resolve before failing',
+            'All of the above'
           ]
         },
         {
-          q: 'A query runs in 8ms in staging (500K rows) but takes 6,200ms in production (18M rows). EXPLAIN shows "Index Scan" in staging, "Seq Scan" in production. Why?',
+          q: 'A query runs in 8ms in staging (Index Scan, 500K rows) but 6,200ms in production (Seq Scan, 18M rows). The index exists in both environments. What is the most likely cause?',
           options: [
-            'The index was not deployed to production — run the migration script',
-            'The query planner decided the index was not selective enough for 18M rows given the current filter — check index coverage and data distribution',
-            'Production has slower disks than staging — upgrade to SSD storage',
-            'The query uses SELECT * which disables index usage in large tables'
+            'The staging statistics are actually stale — production\'s planner is making the correct decision for that data volume',
+            'The query planner chose a sequential scan because the index is not selective enough for the data distribution at 18M rows — ANALYZE may update the plan',
+            'Production is querying a read replica that does not have the index replicated from the primary',
+            'The index type in production is Hash, which is incompatible with the range operator used in the WHERE clause',
+            'All of the above'
           ]
         }
       ],
@@ -188,30 +197,33 @@
       domain: 'Test Automation',
       mcqs: [
         {
-          q: 'Your Playwright test passes locally 100% of the time but fails in CI 30% of the time with "element not found". The element loads after an API call. What is the correct fix?',
+          q: 'Your Playwright test fails in CI with "element not found" on a button that appears after an async API call. The test passes 100% locally. What is the correct fix?',
           options: [
-            'Add await page.waitForTimeout(2000) before the assertion to give CI more time',
-            'Use await expect(locator).toBeVisible() which auto-retries until the element appears or timeout is reached',
-            'Increase the global testTimeout in playwright.config.ts from 30s to 120s',
-            'Add a try/catch around the assertion and retry the action up to 3 times'
+            'Add await page.waitForTimeout(5000) before the click to give CI sufficient time to load',
+            'Use await expect(page.getByTestId(\'submit-btn\')).toBeVisible() — it retries automatically until the element appears or the timeout is reached',
+            'Set a global timeout: 60000 in playwright.config.ts to allow extra time on slow CI runners',
+            'Wrap the interaction in a try/catch and retry the click 3 times with a 2s sleep between attempts',
+            'All of the above'
           ]
         },
         {
-          q: 'You inherit a suite with 200 tests, 40 of which are "flaky". A senior engineer says "delete all flaky tests, they waste time." What is the correct response?',
+          q: 'Which two selector strategies would remain stable after a UI redesign that renames CSS classes, restructures the DOM, and rewrites button labels?',
           options: [
-            'Agree — flaky tests erode trust in the suite and should be removed immediately',
-            'Agree — but only delete tests that have been flaky for more than 30 days',
-            'Disagree — quarantine flaky tests in a separate suite, fix them by root cause (async, shared state, env issues), never delete without investigation',
-            'Disagree — run each flaky test 5 times and only fail the build if it fails 3 or more times'
+            'page.locator(\'.checkout-btn\') — CSS class selector',
+            'page.getByTestId(\'checkout-btn\') — data-testid attribute that the dev team controls independently of styling',
+            'page.getByRole(\'button\', { name: /confirm/i }) — ARIA role with a regex accessible name that tolerates minor label changes',
+            'page.locator(\'//div[@class="container"]/div[2]/button[1]\') — XPath positional selector',
+            'All of the above'
           ]
         },
         {
-          q: 'Which selector strategy is most resilient when the UI undergoes a redesign that changes class names and layout?',
+          q: 'Your suite has 40 flaky tests. Which of the following are valid root causes of test flakiness worth fully investigating before deleting any test?',
           options: [
-            'page.locator(".checkout-btn") — CSS class selector',
-            'page.locator("//div[@class=\'container\']/button[2]") — XPath positional selector',
-            'page.getByTestId("checkout-btn") — data-testid attribute selector',
-            'page.getByText("Checkout") — visible text selector'
+            'Race conditions — the test does not properly wait for async state before asserting',
+            'Test interdependency — tests share mutable state or rely on a specific execution order',
+            'Environment inconsistency — the test behaves differently between local machines and CI infrastructure',
+            'Timing assumptions — hardcoded sleeps that fail when the system is under load or slower than expected',
+            'All of the above'
           ]
         }
       ],
@@ -239,30 +251,33 @@
       domain: 'Root Cause Analysis',
       mcqs: [
         {
-          q: 'A bug is reported: "Checkout crashes on iOS 16 Safari, works everywhere else." After 3 hours you cannot reproduce it locally. What is your best next action?',
+          q: 'A production bug cannot be reproduced in staging after 4 hours of investigation. Real users are still affected. What are your best immediate next two actions?',
           options: [
-            'Close the ticket as "cannot reproduce" and ask the user to provide more steps',
-            'Deploy extra logging to the production checkout flow and wait for the next occurrence with real context',
-            'Copy the production database to staging and test all iOS 16 Safari paths manually',
-            'Rollback the last 3 deployments to identify which change introduced the bug'
+            'Close the ticket as "cannot reproduce" and increase alert thresholds to reduce noise until it recurs',
+            'Add structured logging to the exact production code path and deploy to capture full context on the next occurrence',
+            'Systematically compare all environment differences — config values, data volume, feature flags, infrastructure — between staging and production',
+            'Roll back the last 5 deployments to identify which change introduced the regression',
+            'All of the above'
           ]
         },
         {
-          q: 'Which of these is a correct application of 5-Whys to: "The payment service went down for 40 minutes"?',
+          q: 'Which of these correctly and completely applies 5-Whys to: "The payment service was down for 45 minutes"?',
           options: [
             'Why → server crashed. Root cause: bad server. Fix: replace it.',
-            'Why → server crashed → Why → disk full → Why → logs not rotated → Why → no log rotation policy → Why → not in deployment checklist. Root cause: missing ops process.',
-            'Why → server crashed → Why → too much traffic → Root cause: need auto-scaling.',
-            'Why → server crashed → Why → a bad deploy → Root cause: need better code review.'
+            'Why → server crashed → Why → disk full → Why → logs not rotated → Why → no log rotation policy → Why → ops runbook does not include log rotation setup. Root cause: missing ops process.',
+            'Why → server crashed → Why → too much traffic. Root cause: need auto-scaling. Fix: add more instances.',
+            'Why → server crashed → Why → bad deployment. Root cause: need better code review. Fix: add mandatory approvals.',
+            'All of the above'
           ]
         },
         {
-          q: 'A race condition bug occurs 1 in every 400 runs of a test. Which approach most reliably catches it in CI?',
+          q: 'A race condition occurs 1 in every 500 test runs. Which approach would most reliably surface it in CI without just hoping it appears?',
           options: [
-            'Add a 500ms sleep between the two racing operations',
-            'Run the affected test 400 times in parallel in CI and fail if any run fails',
-            'Use thread sanitizers, stress testing tools, or artificial delay injection to amplify timing windows',
-            'Mark the test as expected-to-fail (xfail) and document the race condition for later'
+            'Add Thread.sleep(500) between the two racing operations to widen the timing window for observation',
+            'Run the test 500 times sequentially in CI and fail the build if any single run fails',
+            'Use thread sanitizers, stress testing tools, or artificial concurrency injection to amplify the timing window — then audit the code for missing synchronisation primitives',
+            'Mark the test as xfail (expected failure) and document the race condition as a known issue for later',
+            'All of the above'
           ]
         }
       ],
@@ -290,30 +305,33 @@
       domain: 'Complex Systems',
       mcqs: [
         {
-          q: 'Service A → B → C. Service C becomes slow (p99 = 9s). Which pattern stops this from making Service A unresponsive?',
+          q: 'Services: A → B → C. Service C degrades to p99 = 9s. Which single pattern most directly prevents this latency from making Service A completely unresponsive?',
           options: [
-            "Retry with exponential backoff on Service A's calls to B",
-            "Circuit breaker on Service B's calls to C — after N failures it opens and returns a fast fallback",
-            "Increase HTTP timeout on Service A's calls to B from 5s to 30s",
-            'Add a synchronous health-check endpoint on Service C that B polls every second'
+            "Add retry with exponential backoff on Service A's calls to Service B — failed calls will eventually succeed once C recovers",
+            "Implement a circuit breaker on Service B's calls to Service C — after N consecutive failures it opens and B immediately returns a cached fallback without waiting",
+            "Increase Service A's HTTP timeout on calls to Service B from 10s to 30s to accommodate C's degraded latency",
+            'Add a health check endpoint on Service C that Service B polls every second before making any calls',
+            'All of the above'
           ]
         },
         {
-          q: "A user's data appears in Region A immediately after creation but is missing in Region B for ~8 seconds. There are no errors. What is the most likely explanation?",
+          q: "A user's order appears in Region A immediately after creation but is missing in Region B for 8–12 seconds with no errors in any logs. Which two explanations are consistent with this evidence?",
           options: [
-            'The CDN is caching a stale API response in Region B',
-            "Region B's read replica has replication lag — the system is eventually consistent",
-            "The user's auth token was not propagated to Region B in time",
-            "Region B is running an older API version that doesn't support the new data format"
+            "Region B's API has a bug that intermittently drops write operations under load",
+            'The system is eventually consistent — the write was accepted in Region A and is still replicating to Region B',
+            "The request was processed in Region A and returned before cross-region replication completed — a read-your-writes violation when reading from Region B",
+            "Region B's CDN is serving a stale cached API response that has not yet expired",
+            'All of the above'
           ]
         },
         {
-          q: 'Services: Auth → Cart → Payment → Order → Notification. A user is charged but receives no order confirmation. Payment logs show success. Where do you look first?',
+          q: 'What does "observability" mean in the context of distributed system testing, and why does it matter specifically for QA?',
           options: [
-            'Auth service — the token may have expired between Payment and Order',
-            'Cart service — the cart may not have been cleared, blocking the Order creation',
-            'Order service — the Payment→Order handoff is where the chain broke based on the evidence',
-            'Notification service — it likely failed to send the email after Order was created'
+            'The ability to monitor CPU and memory dashboards for each service in real time',
+            'The ability to understand a system\'s internal state purely from its external outputs — logs, metrics, and distributed traces — so that a production failure can be reconstructed without needing to reproduce it',
+            'The ability to run automated regression suites against each service in complete isolation from other services',
+            'The ability to toggle features on and off via feature flags without redeployment',
+            'All of the above'
           ]
         }
       ],
@@ -341,30 +359,33 @@
       domain: 'AI in QA',
       mcqs: [
         {
-          q: 'You are testing an LLM-powered support chatbot that scores 96% accuracy on your test set. Which critical risk does this number NOT capture?',
+          q: 'An LLM-powered support chatbot scores 96% accuracy on your test set. Which critical risks does this metric alone NOT address?',
           options: [
-            'Whether the bot handles common questions correctly — 96% accuracy covers this',
-            'Whether the bot can produce harmful, biased, or privacy-leaking responses on rare but real edge case inputs not in your test set',
-            "Whether the bot's API latency meets the 2-second SLA — accuracy doesn't measure latency",
-            "Whether the bot's integration with the ticketing system works end-to-end"
+            'Whether the bot correctly handles the most frequent support queries — the 96% covers this',
+            'Whether the bot can produce harmful, privacy-leaking, or adversarially-triggered outputs on edge cases absent from your test set',
+            'Whether the bot\'s outputs are consistent — the same input may produce different responses on different invocations',
+            'Whether the bot\'s API latency meets the product\'s 2-second SLA',
+            'All of the above'
           ]
         },
         {
-          q: 'What makes testing an LLM feature fundamentally different from testing traditional deterministic software?',
+          q: 'What makes testing an LLM-powered feature fundamentally different from testing traditional deterministic software?',
           options: [
-            'LLMs are slower, so test suites take longer to run',
-            'LLMs require a GPU to run, making local testing impractical',
-            'LLMs are non-deterministic — the same input can produce different outputs, making exact-match assertions invalid and requiring semantic evaluation',
-            'LLMs use REST APIs, which require different test tooling than library-based code'
+            'LLM inference is slow, making test suites take significantly longer to run',
+            'LLMs require cloud APIs, making local testing infrastructure impractical',
+            'LLMs are non-deterministic — the same input can produce different outputs across runs, making exact-match assertions invalid and requiring semantic or probabilistic evaluation',
+            'LLMs communicate via REST APIs, which require different test tooling than library-based code',
+            'All of the above'
           ]
         },
         {
-          q: 'Which approach is most appropriate for evaluating whether a new LLM model version is better than the current one?',
+          q: 'Which of the following are reliable approaches for evaluating whether a new LLM model version outperforms the current production model?',
           options: [
-            'Run the same unit test suite and check that all existing tests still pass',
-            'Measure API response latency — a faster model is a better model',
-            'Evaluate against a human-labelled golden dataset and/or run an A/B test measuring a defined success metric like task completion rate',
-            'Ask the model to evaluate its own outputs and report a self-assessed quality score'
+            'Evaluate against a human-labelled golden dataset with defined success metrics such as precision, recall, or task completion rate',
+            'Use LLM-as-judge — a more capable model scores the outputs of the system under test against reference answers',
+            'Run an A/B test with real users, measuring a defined behavioural metric such as issue resolution rate or satisfaction score',
+            'Score outputs using semantic similarity embeddings between generated responses and curated reference answers',
+            'All of the above'
           ]
         }
       ],
@@ -392,14 +413,16 @@
      Formula: _K[di][mi] = answer XOR ((di*31 + mi*17 + 0xF3) & 0xFF)
      Decode:  answer      = _K[di][mi] XOR ((di*31 + mi*17 + 0xF3) & 0xFF)
      ───────────────────────────────────────────────────────────── */
+  /* Bitmask encoding: bit0=A, bit1=B, bit2=C, bit3=D, bit4=E(all)
+     Single answer B=2, C=4, A+C=5, B+C=6, All-of-above(E)=16        */
   var _K = [
-    [242,  6, 23],   /* domain 0: API Testing          */
-    [ 19, 33, 53],   /* domain 1: Back-End Testing      */
-    [ 48, 67, 82],   /* domain 2: DB Log Reading        */
-    [ 81, 99,112],   /* domain 3: Test Automation       */
-    [110,129,147],   /* domain 4: Root Cause Analysis   */
-    [143,158,178],   /* domain 5: Complex Systems       */
-    [172,188,205]    /* domain 6: AI in QA              */
+    [241,  1, 17],   /* domain 0: API Testing           B(2), A+C(5), C(4)      */
+    [ 20, 39, 49],   /* domain 1: Back-End Testing      B+C(6), C(4), A+C(5)    */
+    [ 51, 68, 81],   /* domain 2: DB Log Reading        B(2), B+C(6), B(2)      */
+    [ 82,103, 98],   /* domain 3: Test Automation       B(2), B+C(6), E/all(16) */
+    [105,130,149],   /* domain 4: Root Cause Analysis   B+C(6), B(2), C(4)      */
+    [140,153,178],   /* domain 5: Complex Systems       B(2), B+C(6), B(2)      */
+    [171,186,223]    /* domain 6: AI in QA              B+C(6), C(4), E/all(16) */
   ];
 
   function _dec(di, mi) {
@@ -495,7 +518,7 @@
   /* ── Render domain ─────────────────────────────────────────── */
   function renderDomain(idx) {
     var domain = _D[idx];
-    _sel = new Array(domain.mcqs.length).fill(null);
+    _sel = new Array(domain.mcqs.length).fill(0);
 
     /* Progress */
     document.getElementById('progressFill').style.width   = ((idx / _D.length) * 100) + '%';
@@ -529,10 +552,10 @@
         var lbl = document.createElement('label');
         lbl.className = 'mcq-option';
 
-        var radio   = document.createElement('input');
-        radio.type  = 'radio';
-        radio.name  = 'mcq_' + qi;
-        radio.value = oi;
+        var cb    = document.createElement('input');
+        cb.type   = 'checkbox';
+        cb.name   = 'mcq_' + qi;
+        cb.value  = oi;
 
         var marker = document.createElement('span');
         marker.className   = 'mcq-marker';
@@ -541,24 +564,29 @@
         var span = document.createElement('span');
         span.textContent = opt;
 
-        lbl.appendChild(radio);
+        /* Visually distinguish the "All of the above" option (always index 4) */
+        if (oi === 4) { lbl.style.borderTop = '1px solid var(--border-md)'; }
+
+        lbl.appendChild(cb);
         lbl.appendChild(marker);
         lbl.appendChild(span);
         opts.appendChild(lbl);
 
-        lbl.addEventListener('click', (function (capturedQi, capturedOi, capturedOpts, capturedMarker) {
+        cb.addEventListener('change', (function (capturedQi, capturedOi, capturedLbl, capturedMarker) {
           return function () {
-            _sel[capturedQi] = capturedOi;
-            capturedOpts.querySelectorAll('.mcq-option').forEach(function (l) { l.classList.remove('selected'); });
-            lbl.classList.add('selected');
-            capturedMarker.style.background = 'var(--white)';
-            capturedMarker.style.color = 'var(--text-inv)';
-            capturedOpts.querySelectorAll('.mcq-option:not(.selected) .mcq-marker').forEach(function (m) {
-              m.style.background = '';
-              m.style.color = '';
-            });
+            if (this.checked) {
+              _sel[capturedQi] = (_sel[capturedQi] || 0) | (1 << capturedOi);
+              capturedLbl.classList.add('selected');
+              capturedMarker.style.background = 'var(--white)';
+              capturedMarker.style.color = 'var(--text-inv)';
+            } else {
+              _sel[capturedQi] = (_sel[capturedQi] || 0) & ~(1 << capturedOi);
+              capturedLbl.classList.remove('selected');
+              capturedMarker.style.background = '';
+              capturedMarker.style.color = '';
+            }
           };
-        })(qi, oi, opts, marker));
+        })(qi, oi, lbl, marker));
       });
 
       block.appendChild(qnum);
@@ -692,11 +720,12 @@
 
     if (isAuto) showFlash('Time\'s up — domain auto-submitted.');
 
-    /* Grade MCQs using decoded answer key — never compares against source */
+    /* Grade MCQs — _dec returns the correct-answer bitmask; _sel[qi] is the
+       candidate's selected bitmask. Exact match required for full marks.    */
     var mcqResults = domain.mcqs.map(function (mcq, qi) {
-      var sel     = _sel[qi];
-      var correct = _dec(_idx, qi);
-      return { selected: sel, isCorrect: sel === correct };
+      var selMask  = _sel[qi] || 0;
+      var corrMask = _dec(_idx, qi);
+      return { selectedMask: selMask, correctMask: corrMask, isCorrect: selMask === corrMask };
     });
 
     /* Collect task answers */
