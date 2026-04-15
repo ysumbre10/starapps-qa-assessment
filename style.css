@@ -1097,3 +1097,137 @@ footer {
   .card { padding: 18px 20px; }
   .timer-wrap { gap: 20px; }
 }
+
+/* ── QA Playground — Split-screen mode ──────────────────── */
+/* Applied to <body> when Domain 9 (QA Playground) is active */
+
+body.split-mode { overflow: hidden; }
+body.split-mode .page { height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+body.split-mode footer { display: none; }
+
+/* Hide the circular main timer; sticky strip handles time display */
+body.split-mode .timer-wrap   { display: none !important; }
+body.split-mode #autosubmitNotice { display: none !important; }
+/* Force sticky timer strip visible in split mode */
+body.split-mode .sticky-timer-strip { max-height: 46px !important; }
+
+body.split-mode main {
+  flex: 1;
+  min-height: 0;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+body.split-mode main > .container {
+  max-width: none;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  gap: 0;
+}
+
+/* Left panel - scrollable question column */
+body.split-mode #assessmentCard {
+  flex: 0 0 42%;
+  max-width: 42%;
+  min-width: 340px;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: 0;
+  margin: 0;
+  padding: 20px 20px 80px;
+  border-right: 1px solid var(--border-md);
+  box-shadow: none;
+  position: relative;
+}
+
+/* Sticky submit bar at bottom of left panel */
+body.split-mode .split-submit-bar {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-1);
+  border-top: 1px solid var(--border);
+  padding: 12px 0 0;
+  margin-top: 20px;
+}
+
+/* Compact timer shown in split left panel header */
+.split-timer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0 14px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.split-timer-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.split-timer-val {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 2px;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s;
+}
+.split-timer-val.warning { color: var(--amber); }
+.split-timer-val.danger  { color: var(--red); animation: timer-pulse 1s ease-in-out infinite; }
+.split-auto-at {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+  text-align: right;
+}
+.split-auto-at strong { color: var(--text-2); }
+
+/* Right panel - iframe fills all remaining space */
+.split-right {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #f3f4f6;
+  position: relative;
+}
+.split-right iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* App label bar at top of right panel */
+.split-app-bar {
+  height: 28px;
+  background: #1e293b;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.split-app-dot { width: 8px; height: 8px; border-radius: 50%; }
+.split-right-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.split-right-inner iframe { flex: 1; min-height: 0; }
+.split-app-title { font-size: 11px; color: #64748b; font-family: var(--font-mono); margin-left: auto; margin-right: auto; letter-spacing: .5px; }
+
+/* Narrower layout tweaks for left panel */
+body.split-mode .section-header { margin-top: 20px; }
+body.split-mode .mcq-block { padding: 14px; }
+body.split-mode .task-block { padding: 14px; }
+body.split-mode .answer-textarea { min-height: 120px; }
+body.split-mode .task-domain-badge { font-size: 10px; }
+body.split-mode h1#domainTitle { font-size: 18px; }

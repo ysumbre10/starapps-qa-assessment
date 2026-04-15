@@ -549,7 +549,9 @@
       ]
     },
 
-    /* ── 7. AI IN QA ──────────────────────────────────────────── */
+    /* ── 7. AI IN QA ──────────────────────────────────────────────────
+       NOTE: domain 8 (QA Playground) appended after this block.
+       ─────────────────────────────────────────────────────────────── */
     {
       id: 7,
       domain: 'AI in QA',
@@ -621,6 +623,111 @@
           evalPrompt: 'You are a senior QA practitioner evaluating a candidate\'s self-assessment of AI usage in QA. Score 0–10: specificity of AI usage in a real QA task - vague answers score 0–1, a specific workflow scores 2–3 (3 pts); concrete example with genuine insight gained (3 pts); specific QA scenario where AI should not replace humans with a clear reason such as exploratory testing, production incident triage, or edge case discovery in real data (3 pts); honesty and self-awareness (1 pt). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         }
       ]
+    },
+
+    /* ── 8. QA PLAYGROUND ──────────────────────────────────────── */
+    {
+      id: 8,
+      domain: 'QA Playground',
+      playground: true,   /* signals split-screen renderer */
+      mcqs: [
+        {
+          q: 'You find "Smart Watch Pro" labeled "Out of Stock" on the Products page. What happens when you click its "Add to Cart" button?',
+          options: [
+            'The button is greyed out and unclickable',
+            'A toast says "Item currently unavailable"',
+            'The item is added to your cart successfully',
+            'A modal appears asking you to join a waitlist',
+            'The page shows an error: "Cannot add out-of-stock items"'
+          ]
+        },
+        {
+          q: 'You type "qatester" (no @ symbol, no domain) into the Email field of the Contact form and click "Send Message." What happens?',
+          options: [
+            'A red border appears with "Invalid email address"',
+            'The form submits and shows a success confirmation',
+            'The Send button stays disabled until a valid email is entered',
+            'A browser tooltip says "Please include an @ in the email address"',
+            'Nothing happens - the form silently fails'
+          ]
+        },
+        {
+          q: 'You apply discount code "SAVE15." The API Monitor shows: {"success": true, "discount": 0.15}. What does the cart total show after applying?',
+          options: [
+            'The total is reduced by 15%',
+            'The total is reduced by a flat $15.00',
+            'An error: "Invalid discount code"',
+            'A "Discount Applied! Save 15%" badge appears but the cart total is unchanged',
+            'The page refreshes and shows the new discounted total'
+          ]
+        },
+        {
+          q: 'You select "Price: Low to High." The four product prices are $49.99, $129.99, $29.99, and $12.99. What order appears?',
+          options: [
+            '$12.99, $29.99, $49.99, $129.99',
+            '$12.99, $129.99, $29.99, $49.99',
+            '$29.99, $49.99, $129.99, $12.99',
+            '$129.99, $49.99, $29.99, $12.99',
+            'The order does not change from the default'
+          ]
+        },
+        {
+          q: 'With items in your cart, you click "Place Order" twice in rapid succession (under one second). What appears in Order History?',
+          options: [
+            'One order - the second click is rejected with a warning',
+            'Two identical orders with the same items and total',
+            'One order - a toast says "Order is already processing"',
+            'An error: "Duplicate order detected"',
+            'The button disables after the first click, preventing the second'
+          ]
+        },
+        {
+          q: 'After using ShopLab for about 2 minutes, you click "Add to Cart." The cart count does not update. What does the API Monitor show for /api/cart/add?',
+          options: [
+            '200 OK with {"success": true, "cartId": "..."}',
+            '302 Found - redirecting to a login page',
+            '408 Request Timeout',
+            '401 Unauthorized with {"error": "Session expired", "code": "SESSION_EXPIRED"}',
+            'No entry in the API Monitor - the request was never sent'
+          ]
+        },
+        {
+          q: 'Your cart has one item: Wireless Headphones ($49.99). Cart shows Subtotal: $49.99, Shipping: Free, Total: $51.99. What is the most likely cause?',
+          options: [
+            'A 4% sales tax is automatically applied to all orders',
+            'A currency conversion fee was added based on your locale',
+            'A $2.00 handling fee is added to the total but not shown as a line item',
+            'A floating point rounding error is causing the $2.00 discrepancy',
+            'The discount code added a credit that was then automatically reversed'
+          ]
+        },
+        {
+          q: 'You click "Add to Cart" on a product. The API Monitor logs the call to GET /api/products/detail. What HTTP status code is shown?',
+          options: [
+            '200 OK - standard success response for a read request',
+            '201 Created - the status code returned by this GET endpoint',
+            '204 No Content - server returned an empty body',
+            '302 Found - the request was redirected',
+            '404 Not Found - the product detail endpoint does not exist'
+          ]
+        }
+      ],
+      tasks: [
+        {
+          title: 'Bug Hunt Report',
+          scenario: 'You have tested ShopLab - the demo store in the panel on the right. You explored Products, Cart, Order History, and Contact. You observed both UI behavior and API Monitor responses.',
+          question: 'List every bug you found.\n\nFor each bug provide:\n1. What you observed (actual behavior)\n2. Where it occurs (page / feature / element)\n3. Bug type: UI / Functional / API / Data / UX / Accessibility\n4. Severity: Critical / High / Medium / Low\n5. Steps to reproduce',
+          placeholder: 'Bug 1:\n  Observed: ...\n  Where: ...\n  Type: ...\n  Severity: ...\n  Steps: 1. ...  2. ...  3. ...\n\nBug 2:\n  Observed: ...\n  ...',
+          evalPrompt: 'You are a senior QA lead reviewing a bug hunt report on a demo e-commerce app (ShopLab). Known bugs: (N1) quantity counter goes negative, (N2) invalid email accepted in contact form, (N3) out-of-stock item adds to cart, (N4) broken product image with no alt text, (N5) contact form submits with empty fields, (H1) price sort uses string comparison, (H2) GET /api/products/detail returns HTTP 201, (H3) discount code shows success badge but total unchanged, (H4) double-submit creates duplicate orders, (H5) session expiry 401 with no UI feedback. Bonus: hidden $2 handling fee, off-by-one char counter, tiny Remove button, low-contrast Sale badge, error states use color only. Score 0-10 based on: count of unique bugs found with acceptable detail (0 bugs=0, 1-2=2, 3-4=4, 5-6=5-6, 7-8=7-8, 9-10=9, 11+=10). Raise score for correct type classification, justified severity, reproducible steps. Return JSON: {"score": N, "feedback": "2-3 sentences mentioning bugs found and quality"}.'
+        },
+        {
+          title: 'Professional Bug Report',
+          scenario: 'Clicking "Place Order" twice rapidly creates duplicate orders in Order History. This is a real data-integrity defect.',
+          question: 'Write a complete professional bug report as you would file in Jira or Linear.\n\nInclude:\n- Title\n- Environment / Browser\n- Preconditions\n- Steps to Reproduce (numbered)\n- Expected Result\n- Actual Result\n- Severity and Priority (with justification)\n- Root Cause Hypothesis\n- Suggested Fix',
+          placeholder: 'Title: ...\n\nEnvironment: ...\n\nPreconditions: ...\n\nSteps to Reproduce:\n  1. ...\n  2. ...\n  3. ...\n\nExpected: ...\n\nActual: ...\n\nSeverity: ...   Priority: ...\nJustification: ...\n\nRoot Cause Hypothesis: ...\n\nSuggested Fix: ...',
+          evalPrompt: 'You are a senior QA engineer evaluating a bug report for a duplicate order issue (rapid double-click on Place Order). Score 0-10: clear and specific title (1 pt), accurate steps including the rapid double-click action (2 pts), correct expected vs actual distinction (1 pt), severity High or Critical with business justification such as data integrity or financial impact (2 pts), root cause mentioning debounce, idempotency key, button disable before async call, or race condition (2 pts), technically sound suggested fix (2 pts). Deduct for vague steps, wrong severity, or missing sections. Return JSON: {"score": N, "feedback": "2-3 sentence evaluation"}.'
+        }
+      ]
     }
   ];
 
@@ -631,14 +738,15 @@
      Index: 0=A, 1=B, 2=C, 3=D, 4=E
      ───────────────────────────────────────────────────────────── */
   var _K = [
-    [242,  5, 23, 39, 54, 74, 88],   /* domain 0: Manual Testing        B,B,C,B,B,C,B */
-    [ 16, 33, 52, 71, 87],            /* domain 1: API Testing            C,C,A,C,B     */
-    [ 48, 64, 82,102,116],            /* domain 2: Back-End Testing       B,C,B,C,B     */
-    [ 81, 99,115,130,149],            /* domain 3: DB Log Reading         B,C,B,B,B     */
-    [110,130,147,163,179],            /* domain 4: Test Automation        B,C,C,B,A     */
-    [141,157,177,195,210],            /* domain 5: Root Cause Analysis    D,C,B,C,A     */
-    [172,191,205,225,240],            /* domain 6: Complex Systems        B,B,C,B,B     */
-    [206,223,239,253, 17]             /* domain 7: AI in QA               C,C,B,C,B     */
+    [242,  5, 23, 39, 54, 74, 88],        /* domain 0: Manual Testing        B,B,C,B,B,C,B         */
+    [ 16, 33, 52, 71, 87],                 /* domain 1: API Testing            C,C,A,C,B             */
+    [ 48, 64, 82,102,116],                 /* domain 2: Back-End Testing       B,C,B,C,B             */
+    [ 81, 99,115,130,149],                 /* domain 3: DB Log Reading         B,C,B,B,B             */
+    [110,130,147,163,179],                 /* domain 4: Test Automation        B,C,C,B,A             */
+    [141,157,177,195,210],                 /* domain 5: Root Cause Analysis    D,C,B,C,A             */
+    [172,191,205,225,240],                 /* domain 6: Complex Systems        B,B,C,B,B             */
+    [206,223,239,253, 17],                 /* domain 7: AI in QA               C,C,B,C,B             */
+    [233,253, 14, 31, 46, 67, 83, 99]     /* domain 8: QA Playground          C,B,D,B,B,D,C,B       */
   ];
 
   function _dec(di, mi) {
@@ -747,6 +855,11 @@
   /* ── Render domain ─────────────────────────────────────────── */
   function renderDomain(idx) {
     var domain = _D[idx];
+
+    /* Split-screen toggle for QA Playground */
+    if (domain.playground) { setupSplitMode(); }
+    else                   { teardownSplitMode(); }
+
     _sel = Array.from({ length: domain.mcqs.length }, function () { return []; });
 
     /* Progress */
@@ -884,8 +997,12 @@
 
     /* Auto-submit time label - use saved deadline if resuming */
     var _labelDeadline = (_savedDeadline > _now()) ? _savedDeadline : (_now() + TOTAL_SECS * 1000);
-    document.getElementById('autoSubmitAt').textContent =
-      new Date(_labelDeadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    var _autoTimeStr = new Date(_labelDeadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('autoSubmitAt').textContent = _autoTimeStr;
+
+    /* Also update split-panel auto-submit time (set after _deadline is known) */
+    var _splitAt = document.getElementById('splitAutoTime');
+    if (_splitAt) _splitAt.textContent = _autoTimeStr;
 
     startTimer(_savedDeadline > _now() ? _savedDeadline : 0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -976,6 +1093,15 @@
       if (rem <= 30)       sEl.classList.add('danger');
       else if (rem <= 120) sEl.classList.add('warning');
     }
+
+    /* Mirror to split-screen compact timer */
+    var spEl = document.getElementById('splitTimerVal');
+    if (spEl) {
+      spEl.textContent = pad(m) + ':' + pad(s);
+      spEl.className = 'split-timer-val';
+      if (rem <= 30)       spEl.classList.add('danger');
+      else if (rem <= 120) spEl.classList.add('warning');
+    }
   }
 
   /* ── Submit ────────────────────────────────────────────────── */
@@ -1059,12 +1185,80 @@
     card.style.opacity    = '0';
 
     setTimeout(function () {
+      teardownSplitMode();
       document.getElementById('autosubmitNotice').style.display = 'none';
       btn.disabled  = false;
       btn.innerHTML = 'Submit &amp; Next Domain →';
       card.style.opacity = '1';
       renderDomain(_idx);
     }, 250);
+  }
+
+  /* ── Split-screen (QA Playground) ─────────────────────────── */
+  function setupSplitMode() {
+    if (document.body.classList.contains('split-mode')) return;
+    document.body.classList.add('split-mode');
+
+    /* Inject right panel with browser chrome bar + iframe */
+    var card = document.getElementById('assessmentCard');
+    if (card && card.parentNode && !document.getElementById('splitRight')) {
+      var right = document.createElement('div');
+      right.id = 'splitRight';
+      right.className = 'split-right';
+      right.innerHTML =
+        '<div class="split-right-inner">' +
+          '<div class="split-app-bar">' +
+            '<span class="split-app-dot" style="background:#ef4444"></span>' +
+            '<span class="split-app-dot" style="background:#f59e0b;margin-left:4px"></span>' +
+            '<span class="split-app-dot" style="background:#22c55e;margin-left:4px"></span>' +
+            '<span class="split-app-title">ShopLab - Demo Store</span>' +
+          '</div>' +
+          '<iframe src="demo-app.html" title="ShopLab Test Application" allow="clipboard-write"></iframe>' +
+        '</div>';
+      card.parentNode.insertBefore(right, card.nextSibling);
+    }
+
+    /* Inject compact timer at top of left panel */
+    if (card && !document.getElementById('splitTimerBar')) {
+      var bar = document.createElement('div');
+      bar.id = 'splitTimerBar';
+      bar.className = 'split-timer-bar';
+      bar.innerHTML =
+        '<div>' +
+          '<div class="split-timer-label">Time Remaining</div>' +
+        '</div>' +
+        '<div class="split-timer-val" id="splitTimerVal">10:00</div>' +
+        '<div class="split-auto-at" id="splitAutoAt"><div class="split-timer-label">Auto-submits</div><strong id="splitAutoTime">-</strong></div>';
+      card.insertBefore(bar, card.firstChild);
+
+      /* Set auto-submit time */
+      var labelDeadline = (_deadline > 0 && _deadline > _now()) ? _deadline : (_now() + TOTAL_SECS * 1000);
+      var atEl = document.getElementById('splitAutoTime');
+      if (atEl) atEl.textContent = new Date(labelDeadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    /* Wrap submit button row in sticky bar */
+    if (card) {
+      var submitRow = card.querySelector('[style*="display:flex"][style*="margin-top:24px"]');
+      if (submitRow && !submitRow.classList.contains('split-submit-bar')) {
+        submitRow.classList.add('split-submit-bar');
+      }
+    }
+
+    /* Force sticky timer strip to show (replaces the hidden .timer-wrap) */
+    var strip = document.getElementById('stickyTimerStrip');
+    if (strip) strip.classList.add('show');
+  }
+
+  function teardownSplitMode() {
+    if (!document.body.classList.contains('split-mode')) return;
+    document.body.classList.remove('split-mode');
+    var right = document.getElementById('splitRight');
+    if (right && right.parentNode) right.parentNode.removeChild(right);
+    var bar = document.getElementById('splitTimerBar');
+    if (bar && bar.parentNode) bar.parentNode.removeChild(bar);
+    var strip = document.getElementById('stickyTimerStrip');
+    if (strip) strip.classList.remove('show');
   }
 
   /* ── Helpers ───────────────────────────────────────────────── */

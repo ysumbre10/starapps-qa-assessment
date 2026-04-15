@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShopLab - Demo Store</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #4f46e5; --primary-h: #4338ca;
+      --success: #16a34a; --danger: #dc2626; --warning: #d97706;
+      --text: #111827; --text-2: #374151; --text-3: #6b7280; --text-4: #9ca3af;
+      --bg: #f3f4f6; --surface: #ffffff;
+      --border: #e5e7eb; --border-2: #d1d5db;
+      --shadow: 0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
+      --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.05);
+      --radius: 8px; --radius-sm: 5px;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --mono: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    }
+    html, body { height: 100%; }
+    body { font-family: var(--font); font-size: 14px; color: var(--text); background: var(--bg); line-height: 1.5; display: flex; flex-direction: column; }
+
+    /* ── Header ── */
+    .sl-header { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+    .sl-header-inner { max-width: 960px; margin: 0 auto; padding: 0 16px; height: 52px; display: flex; align-items: center; gap: 0; }
+    .sl-logo { font-size: 17px; font-weight: 800; color: var(--primary); letter-spacing: -.5px; text-decoration: none; flex-shrink: 0; margin-right: 24px; }
+    .sl-logo span { color: var(--text-4); font-weight: 400; font-size: 11px; margin-left: 4px; }
+    .sl-nav { display: flex; flex: 1; }
+    .sl-nav-btn { height: 52px; padding: 0 14px; background: none; border: none; border-bottom: 2px solid transparent; font-size: 13px; font-weight: 500; color: var(--text-2); cursor: pointer; font-family: var(--font); transition: color .15s, border-color .15s; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+    .sl-nav-btn:hover { color: var(--primary); }
+    .sl-nav-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .cart-pill { background: var(--primary); color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; min-width: 18px; text-align: center; }
+    .sl-session { margin-left: auto; font-size: 11px; font-family: var(--mono); color: var(--text-3); flex-shrink: 0; }
+    .session-val { font-weight: 600; color: var(--text-2); }
+    .session-val.warn { color: var(--warning); }
+    .session-val.dead { color: var(--danger); }
+
+    /* ── Main ── */
+    .sl-main { flex: 1; max-width: 960px; width: 100%; margin: 0 auto; padding: 20px 16px 100px; }
+    .pg-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .pg-sub { font-size: 12px; color: var(--text-3); margin-bottom: 16px; }
+
+    /* ── Toolbar ── */
+    .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tbar-label { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; }
+    .sl-select { height: 32px; padding: 0 8px; border: 1px solid var(--border-2); border-radius: var(--radius-sm); font-size: 13px; color: var(--text); background: var(--surface); cursor: pointer; font-family: var(--font); }
+    .sl-select:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+    .filter-lbl { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); cursor: pointer; user-select: none; }
+    .filter-lbl input { accent-color: var(--primary); width: 14px; height: 14px; cursor: pointer; }
+
+    /* ── Product grid ── */
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap: 14px; }
+    .product-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; }
+    .prod-img-wrap { position: relative; background: #f1f5f9; height: 130px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .prod-emoji { font-size: 52px; line-height: 1; }
+    .prod-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .prod-badge { position: absolute; top: 8px; left: 8px; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 100px; text-transform: uppercase; letter-spacing: .5px; }
+    /* BUG-UX: Sale badge - low contrast yellow text on light yellow background */
+    .badge-sale { background: #fef9c3; color: #ca8a04; }
+    .badge-oos { background: #fee2e2; color: #b91c1c; }
+    .prod-body { padding: 11px 12px; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+    .prod-name { font-size: 13px; font-weight: 600; line-height: 1.3; }
+    .prod-price { font-size: 15px; font-weight: 700; color: var(--primary); }
+    .stock-row { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; }
+    .stock-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+    .in-stock { color: var(--success); }
+    .out-stock { color: var(--danger); }
+    .prod-footer { padding: 10px 12px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+    .qty-ctrl { display: flex; align-items: center; border: 1px solid var(--border-2); border-radius: var(--radius-sm); overflow: hidden; }
+    .qty-btn { width: 26px; height: 26px; border: none; background: #f9fafb; color: var(--text); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; transition: background .1s; }
+    .qty-btn:hover { background: var(--border); }
+    .qty-val { width: 28px; text-align: center; font-size: 13px; font-weight: 600; border-left: 1px solid var(--border-2); border-right: 1px solid var(--border-2); height: 26px; display: flex; align-items: center; justify-content: center; }
+    /* BUG-N3: Add to Cart has NO disabled state for out-of-stock items */
+    .add-btn { flex: 1; height: 30px; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: background .15s; }
+    .add-btn:hover { background: var(--primary-h); }
+
+    /* ── Cart ── */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-4); }
+    .empty-icon { font-size: 40px; margin-bottom: 8px; }
+    .empty-text { font-size: 14px; }
+    .cart-list { display: flex; flex-direction: column; gap: 8px; }
+    .cart-row { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
+    .cart-info { flex: 1; min-width: 0; }
+    .cart-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cart-unit { font-size: 12px; color: var(--text-3); margin-top: 1px; }
+    .cart-subtotal { font-weight: 700; font-size: 13px; width: 56px; text-align: right; flex-shrink: 0; }
+    /* BUG-UX: Remove button has 10px font - too small to tap on mobile, easy to miss */
+    .remove-btn { font-size: 10px; color: var(--danger); background: none; border: none; cursor: pointer; text-decoration: underline; font-family: var(--font); padding: 0; white-space: nowrap; }
+    .cart-summary { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-top: 14px; }
+    .sum-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--text-2); padding: 3px 0; }
+    .sum-ship { color: var(--success); font-weight: 600; }
+    /* BUG-H5: No "Handling Fee" row shown here - $2 added silently in JS */
+    .sum-total { font-size: 15px; font-weight: 700; color: var(--text); border-top: 1px solid var(--border); margin-top: 8px; padding-top: 10px; display: flex; justify-content: space-between; }
+    .discount-bar { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+    .sl-input { height: 34px; padding: 0 10px; border: 1px solid var(--border-2); border-radius: var(--radius-sm); font-size: 13px; color: var(--text); background: var(--surface); font-family: var(--font); }
+    .sl-input:focus { outline: 2px solid var(--primary); outline-offset: 1px; border-color: transparent; }
+    .sl-input-grow { flex: 1; min-width: 100px; }
+    .sl-btn { height: 34px; padding: 0 14px; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: opacity .15s; }
+    .sl-btn:hover { opacity: .85; }
+    .btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .d-msg { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 4px; }
+    .d-ok { background: #dcfce7; color: #166534; }
+    .d-err { background: #fee2e2; color: #991b1b; }
+    .order-bar { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+    /* BUG-N6 UX: No confirmation dialog before placing an order */
+    .place-btn { height: 42px; font-size: 14px; border-radius: var(--radius); width: 100%; }
+    .order-terms { font-size: 11px; color: var(--text-4); text-align: center; }
+
+    /* ── Orders ── */
+    .order-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 15px; margin-bottom: 10px; }
+    .order-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .order-id { font-weight: 700; font-size: 13px; font-family: var(--mono); }
+    .order-time { font-size: 11px; color: var(--text-4); }
+    .order-items { font-size: 12px; color: var(--text-2); }
+    .order-total { font-size: 13px; font-weight: 600; margin-top: 4px; }
+
+    /* ── Contact ── */
+    .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; max-width: 480px; }
+    .form-grp { margin-bottom: 13px; }
+    .form-lbl { display: block; font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 5px; }
+    .req { color: var(--danger); margin-left: 2px; }
+    .form-inp { width: 100%; height: 36px; padding: 0 10px; border: 1px solid var(--border-2); border-radius: var(--radius-sm); font-size: 13px; color: var(--text); background: var(--surface); font-family: var(--font); }
+    .form-inp:focus { outline: 2px solid var(--primary); outline-offset: 1px; border-color: transparent; }
+    /* BUG-N2: type="text" - browser does NOT validate email format */
+    .form-ta { width: 100%; min-height: 80px; padding: 8px 10px; border: 1px solid var(--border-2); border-radius: var(--radius-sm); font-size: 13px; color: var(--text); background: var(--surface); font-family: var(--font); resize: vertical; }
+    .form-ta:focus { outline: 2px solid var(--primary); outline-offset: 1px; border-color: transparent; }
+    .char-row { display: flex; justify-content: flex-end; font-size: 11px; color: var(--text-4); margin-top: 3px; font-family: var(--mono); }
+    /* BUG-UX-A11Y: Error state uses only red border color - no icon, not accessible */
+    .inp-err { border-color: var(--danger) !important; }
+    .submit-btn { width: 100%; height: 38px; font-size: 13px; border-radius: var(--radius-sm); margin-top: 4px; }
+
+    /* ── API Monitor ── */
+    .api-mon { position: fixed; bottom: 0; left: 0; right: 0; z-index: 200; background: #0f172a; border-top: 1px solid #1e293b; font-family: var(--mono); }
+    .api-mon-hdr { display: flex; align-items: center; gap: 8px; padding: 6px 14px; cursor: pointer; user-select: none; min-height: 32px; }
+    .api-mon-title { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; flex-shrink: 0; }
+    .api-mon-tog { font-size: 10px; color: #475569; margin-left: auto; flex-shrink: 0; }
+    .api-pill { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; text-transform: uppercase; letter-spacing: .3px; white-space: nowrap; }
+    .p-method { background: #1e3a5f; color: #60a5fa; }
+    .p-url { background: #1e293b; color: #94a3b8; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+    .p-2xx { background: #14532d; color: #4ade80; }
+    /* BUG-H2: 201 gets a yellow pill to hint it's unusual */
+    .p-201 { background: #713f12; color: #fbbf24; }
+    .p-4xx { background: #450a0a; color: #f87171; }
+    .api-mon-body { display: none; padding: 0 14px 10px; max-height: 150px; overflow-y: auto; }
+    .api-mon-body.open { display: block; }
+    .api-pre { font-size: 11px; color: #e2e8f0; white-space: pre; line-height: 1.7; }
+    .jk { color: #94a3b8; } .js { color: #86efac; } .jn { color: #fbbf24; } .jb { color: #f472b6; }
+    .api-empty { font-size: 11px; color: #475569; font-style: italic; padding: 2px 0; }
+
+    /* ── Toast ── */
+    .sl-toast { position: fixed; bottom: 48px; left: 50%; transform: translateX(-50%) translateY(10px); background: #1e293b; color: #f1f5f9; font-size: 13px; font-weight: 500; padding: 9px 16px; border-radius: 8px; white-space: nowrap; z-index: 9999; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+    .sl-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="sl-header">
+  <div class="sl-header-inner">
+    <a class="sl-logo" href="#" onclick="return false;">ShopLab<span>Demo Store</span></a>
+    <nav class="sl-nav">
+      <button class="sl-nav-btn active" data-tab="products" onclick="showTab('products')">Products</button>
+      <button class="sl-nav-btn" data-tab="cart" onclick="showTab('cart')">Cart <span class="cart-pill" id="cartPill">0</span></button>
+      <button class="sl-nav-btn" data-tab="orders" onclick="showTab('orders')">Orders</button>
+      <button class="sl-nav-btn" data-tab="contact" onclick="showTab('contact')">Contact</button>
+    </nav>
+    <div class="sl-session">Session: <span class="session-val" id="sessionClock">2:00</span></div>
+  </div>
+</header>
+
+<!-- ── Main ── -->
+<div class="sl-main">
+
+  <!-- Products -->
+  <div id="tab-products">
+    <div class="pg-title">Our Products</div>
+    <div class="pg-sub">4 items in catalogue</div>
+    <div class="toolbar">
+      <span class="tbar-label">Sort by</span>
+      <select class="sl-select" id="sortSel" onchange="renderProducts()">
+        <option value="default">Default</option>
+        <option value="name">Name A-Z</option>
+        <option value="price-asc">Price: Low to High</option>
+        <option value="price-desc">Price: High to Low</option>
+      </select>
+      <label class="filter-lbl">
+        <input type="checkbox" id="stockChk" onchange="renderProducts()"> In Stock Only
+      </label>
+    </div>
+    <div class="product-grid" id="productGrid"></div>
+  </div>
+
+  <!-- Cart -->
+  <div id="tab-cart" style="display:none">
+    <div class="pg-title">Your Cart</div>
+    <div class="pg-sub" id="cartSub">0 items</div>
+    <div id="cartList"></div>
+    <div id="cartSummary" style="display:none">
+      <div class="cart-summary">
+        <div class="sum-row"><span>Subtotal</span><span id="cartSubtotalVal">$0.00</span></div>
+        <div class="sum-row"><span>Shipping</span><span class="sum-ship">Free</span></div>
+        <!-- NOTE: No handling fee line item shown here -->
+        <div class="sum-total"><span>Total</span><span id="cartTotalVal">$0.00</span></div>
+      </div>
+      <div class="discount-bar">
+        <input type="text" class="sl-input sl-input-grow" id="discountInp" placeholder="Discount code (try SAVE15)">
+        <button class="sl-btn btn-outline" onclick="applyDiscount()">Apply</button>
+        <span id="discountMsg" style="display:none" class="d-msg"></span>
+      </div>
+      <div class="order-bar">
+        <button class="sl-btn btn-primary place-btn" id="placeBtn" onclick="placeOrder()">Place Order</button>
+        <div class="order-terms">By placing your order you agree to our Terms of Service</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders -->
+  <div id="tab-orders" style="display:none">
+    <div class="pg-title">Order History</div>
+    <div class="pg-sub">Your past orders</div>
+    <div id="orderList"></div>
+  </div>
+
+  <!-- Contact -->
+  <div id="tab-contact" style="display:none">
+    <div class="pg-title">Contact Us</div>
+    <div class="pg-sub">We respond within 24 hours.</div>
+    <div class="form-card">
+      <div class="form-grp">
+        <label class="form-lbl">Full Name <span class="req">*</span></label>
+        <!-- BUG-N5: no required attr, no validation -->
+        <input type="text" class="form-inp" id="cName" placeholder="Jane Smith">
+      </div>
+      <div class="form-grp">
+        <label class="form-lbl">Email Address <span class="req">*</span></label>
+        <!-- BUG-N2: type="text" — browser skips email format validation -->
+        <input type="text" class="form-inp" id="cEmail" placeholder="jane@company.com">
+      </div>
+      <div class="form-grp">
+        <label class="form-lbl">Subject</label>
+        <input type="text" class="form-inp" id="cSubject" placeholder="How can we help?">
+      </div>
+      <div class="form-grp">
+        <label class="form-lbl">Message</label>
+        <textarea class="form-ta" id="cMsg" maxlength="200" rows="4" oninput="updateCharCount()"></textarea>
+        <!-- BUG-N-bonus: counter starts at 199 instead of 200 (off-by-one in updateCharCount) -->
+        <div class="char-row"><span id="charCount">199 left</span></div>
+      </div>
+      <button class="sl-btn btn-primary submit-btn" onclick="submitContact()">Send Message</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── API Monitor ── -->
+<div class="api-mon" id="apiMon">
+  <div class="api-mon-hdr" onclick="toggleMon()">
+    <span class="api-mon-title">API Monitor</span>
+    <span class="api-pill p-method" id="monMethod" style="display:none"></span>
+    <span class="api-pill p-url"    id="monUrl"    style="display:none"></span>
+    <span class="api-pill"          id="monStatus" style="display:none"></span>
+    <span class="api-mon-tog"       id="monTog">▲ expand</span>
+  </div>
+  <div class="api-mon-body" id="monBody">
+    <div class="api-empty">No API calls yet. Interact with the store to see live requests here.</div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================
+   ShopLab - intentional bug playground for QA assessment
+   ========================================================== */
+
+/* ── Data ── */
+var PRODUCTS = [
+  { id:1, name:'Wireless Headphones', price:49.99, inStock:true,  emoji:'🎧', badge:null,         desc:'Premium over-ear noise-cancelling headphones' },
+  { id:2, name:'Smart Watch Pro',     price:129.99,inStock:false, emoji:'⌚', badge:'Out of Stock',desc:'Advanced health tracking smartwatch' /* BUG-N3: Add to Cart still works */ },
+  { id:3, name:'USB-C Hub 7-in-1',   price:29.99, inStock:true,  emoji:'🔌', badge:null,         desc:'7 ports: USB-A x3, HDMI, USB-C x2, SD reader', brokenImg:true /* BUG-N4 */ },
+  { id:4, name:'Phone Stand Flex',   price:12.99, inStock:true,  emoji:'📱', badge:'Sale',        desc:'Adjustable aluminium desk stand' /* BUG-UX: Sale badge low contrast */ }
+];
+
+var cart = [];
+var qtys = {1:1, 2:1, 3:1, 4:1};
+var SESSION_MS = 120000; /* 2 minutes */
+var sessionStart = Date.now();
+var HANDLING_FEE = 2.00; /* BUG-H5: silently added, not shown as line item */
+var monOpen = false;
+
+/* ── Session timer ── */
+(function tick() {
+  var rem = Math.max(0, SESSION_MS - (Date.now() - sessionStart));
+  var m = Math.floor(rem / 60000);
+  var s = Math.floor((rem % 60000) / 1000);
+  var el = document.getElementById('sessionClock');
+  if (el) {
+    el.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+    el.className = 'session-val' + (rem === 0 ? ' dead' : rem < 30000 ? ' dead' : rem < 60000 ? ' warn' : '');
+    if (rem === 0) el.textContent = 'Expired';
+  }
+  setTimeout(tick, 500);
+}());
+
+/* ── Mock API ── */
+function mockAPI(method, endpoint, data) {
+  var delay = 200 + Math.floor(Math.random() * 350);
+  return new Promise(function(resolve) {
+    setTimeout(function() {
+      var expired = (Date.now() - sessionStart) > SESSION_MS;
+
+      /* BUG-H4: Session expired returns 401 silently; callers ignore it */
+      if (expired) {
+        var r = { status:401, body:{ error:'Session expired', code:'SESSION_EXPIRED' } };
+        logAPI(method, endpoint, r.status, r.body);
+        return resolve(r);
+      }
+
+      /* GET /api/products/detail → BUG-H2: returns 201 for a GET */
+      if (method === 'GET' && endpoint === '/api/products/detail') {
+        var p = PRODUCTS.find(function(x){ return x.id === data.id; });
+        var r = { status:201, body:{ product:{ id:p.id, name:p.name, price:p.price, inStock:p.inStock }, timestamp:new Date().toISOString() } };
+        logAPI(method, endpoint, r.status, r.body);
+        return resolve(r);
+      }
+
+      /* POST /api/cart/add */
+      if (method === 'POST' && endpoint === '/api/cart/add') {
+        var r = { status:200, body:{ success:true, cartId:'CART-'+(Date.now()%99999) } };
+        logAPI(method, endpoint, r.status, r.body);
+        return resolve(r);
+      }
+
+      /* POST /api/discount/validate → BUG-H3: success:true but UI ignores discount value */
+      if (method === 'POST' && endpoint === '/api/discount/validate') {
+        var r = data.code === 'SAVE15'
+          ? { status:200, body:{ success:true,  discount:0.15, message:'Discount applied successfully' } }
+          : { status:400, body:{ success:false, error:'Invalid or expired code' } };
+        logAPI(method, endpoint, r.status, r.body);
+        return resolve(r);
+      }
+
+      /* POST /api/orders → BUG-H1: no idempotency, each call creates new order */
+      if (method === 'POST' && endpoint === '/api/orders') {
+        var oid = 'ORD-' + Math.random().toString(36).substr(2,8).toUpperCase();
+        var r = { status:201, body:{ success:true, orderId:oid, items:data.items, total:data.total, eta:'3-5 business days' } };
+        logAPI(method, endpoint, r.status, r.body);
+        return resolve(r);
+      }
+
+      /* POST /api/contact */
+      if (method === 'POST' && endpoint === '/api/contact') {
+        var stored = JSON.parse(localStorage.getItem('sl_contacts')||'[]');
+        var dup = stored.some(function(c){ return c.email === data.email; });
+        var r;
+        if (dup) {
+          /* BUG: returns HTTP 200 with success:false - wrong status for an error */
+          r = { status:200, body:{ success:false, error:'Email already registered in our system' } };
+        } else {
+          stored.push({ name:data.name, email:data.email, ts:Date.now() });
+          localStorage.setItem('sl_contacts', JSON.stringify(stored));
+          r = { status:200, body:{ success:true, ticketId:'TKT-'+(Date.now()%9999), message:'Message received' } };
+        }
+        logAPI(method, endpoint, r.status, r.body);
+        return resolve(r);
+      }
+
+      resolve({ status:404, body:{ error:'Not found' } });
+    }, delay);
+  });
+}
+
+/* ── API Monitor ── */
+function logAPI(method, endpoint, status, body) {
+  var elM = document.getElementById('monMethod');
+  var elU = document.getElementById('monUrl');
+  var elS = document.getElementById('monStatus');
+  if (elM) { elM.textContent = method; elM.style.display = ''; }
+  if (elU) { elU.textContent = endpoint; elU.style.display = ''; }
+  if (elS) {
+    elS.textContent = status;
+    elS.className = 'api-pill ' + (status === 201 ? 'p-201' : status < 300 ? 'p-2xx' : 'p-4xx');
+    elS.style.display = '';
+  }
+  var el = document.getElementById('monBody');
+  if (el) el.innerHTML = '<pre class="api-pre">' + highlight(JSON.stringify(body, null, 2)) + '</pre>';
+}
+
+function highlight(j) {
+  return j.replace(/("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g, function(m) {
+    var c = /^"/.test(m) ? (/:$/.test(m) ? 'jk' : 'js') : /true|false/.test(m) ? 'jb' : /null/.test(m) ? 'jk' : 'jn';
+    return '<span class="' + c + '">' + m + '</span>';
+  });
+}
+
+function toggleMon() {
+  monOpen = !monOpen;
+  var el = document.getElementById('monBody');
+  var tog = document.getElementById('monTog');
+  if (el)  el.classList.toggle('open', monOpen);
+  if (tog) tog.textContent = monOpen ? '▼ collapse' : '▲ expand';
+}
+
+/* ── Tabs ── */
+function showTab(name) {
+  ['products','cart','orders','contact'].forEach(function(t) {
+    document.getElementById('tab-'+t).style.display = t === name ? '' : 'none';
+    var b = document.querySelector('[data-tab="'+t+'"]');
+    if (b) b.classList.toggle('active', t === name);
+  });
+  if (name === 'cart')   renderCart();
+  if (name === 'orders') renderOrders();
+}
+
+/* ── Products ── */
+function getProducts() {
+  var list = PRODUCTS.slice();
+  var chk = document.getElementById('stockChk');
+  if (chk && chk.checked) list = list.filter(function(p){ return p.inStock; });
+  var s = (document.getElementById('sortSel')||{}).value || 'default';
+  if (s === 'name') {
+    list.sort(function(a,b){ return a.name.localeCompare(b.name); });
+  } else if (s === 'price-asc') {
+    /* BUG-H1: string comparison - "129.99" < "29.99" because "1" < "2" */
+    list.sort(function(a,b){ var sa=String(a.price), sb=String(b.price); return sa<sb?-1:sa>sb?1:0; });
+  } else if (s === 'price-desc') {
+    list.sort(function(a,b){ var sa=String(a.price), sb=String(b.price); return sb<sa?-1:sb>sa?1:0; });
+  }
+  return list;
+}
+
+function renderProducts() {
+  var grid = document.getElementById('productGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  getProducts().forEach(function(p) {
+    var card = document.createElement('div');
+    card.className = 'product-card';
+
+    /* BUG-N4: product id=3 has broken image src, no alt attribute */
+    var imgHtml = p.brokenImg
+      ? '<img class="prod-img" src="assets/hub-product.jpg">'  /* 404, no alt */
+      : '<div class="prod-emoji">' + p.emoji + '</div>';
+
+    var badgeHtml = '';
+    if (p.badge === 'Out of Stock') badgeHtml = '<span class="prod-badge badge-oos">Out of Stock</span>';
+    else if (p.badge === 'Sale')    badgeHtml = '<span class="prod-badge badge-sale">Sale</span>';
+
+    var stockHtml = p.inStock
+      ? '<div class="stock-row in-stock"><span class="stock-dot"></span>In Stock</div>'
+      : '<div class="stock-row out-stock"><span class="stock-dot"></span>Out of Stock</div>';
+
+    /* BUG-N3: "Add to Cart" has no disabled/out-of-stock check */
+    card.innerHTML =
+      '<div class="prod-img-wrap">' + imgHtml + badgeHtml + '</div>' +
+      '<div class="prod-body">' +
+        '<div class="prod-name">' + p.name + '</div>' +
+        '<div class="prod-price">$' + p.price.toFixed(2) + '</div>' +
+        stockHtml +
+      '</div>' +
+      '<div class="prod-footer">' +
+        '<div class="qty-ctrl">' +
+          '<button class="qty-btn" onclick="changeQty('+p.id+',-1)">-</button>' +
+          '<div class="qty-val" id="qty-'+p.id+'">' + (qtys[p.id]||1) + '</div>' +
+          '<button class="qty-btn" onclick="changeQty('+p.id+',1)">+</button>' +
+        '</div>' +
+        '<button class="add-btn" onclick="addToCart('+p.id+')">Add to Cart</button>' +
+      '</div>';
+    grid.appendChild(card);
+  });
+}
+
+function changeQty(id, d) {
+  /* BUG-N1: no minimum check - qty can go negative */
+  qtys[id] = qtys[id] + d;
+  var el = document.getElementById('qty-'+id);
+  if (el) el.textContent = qtys[id];
+}
+
+function addToCart(id) {
+  mockAPI('GET', '/api/products/detail', { id:id }).then(function(res) {
+    /* BUG-H2: res.status is 201 here but we never validate it */
+    /* BUG-N3: no inStock check - adds out-of-stock items without error */
+    if (res.status === 401) return; /* BUG-H4: silent fail on session expiry */
+
+    mockAPI('POST', '/api/cart/add', { productId:id, qty:qtys[id] }).then(function(addRes) {
+      if (addRes.status === 401) return; /* BUG-H4: silent fail */
+      var p = PRODUCTS.find(function(x){ return x.id === id; });
+      var qty = qtys[id] || 1;
+      var ex = cart.find(function(i){ return i.id === id; });
+      if (ex) { ex.qty += qty; } else { cart.push({ id:p.id, name:p.name, price:p.price, qty:qty }); }
+      qtys[id] = 1;
+      var el = document.getElementById('qty-'+id);
+      if (el) el.textContent = 1;
+      updatePill();
+      toast(qty + 'x ' + p.name + ' added to cart');
+    });
+  });
+}
+
+function updatePill() {
+  var n = cart.reduce(function(s,i){ return s+i.qty; }, 0);
+  var el = document.getElementById('cartPill');
+  if (el) el.textContent = n;
+}
+
+/* ── Cart ── */
+function renderCart() {
+  var listEl = document.getElementById('cartList');
+  var sumEl  = document.getElementById('cartSummary');
+  var subEl  = document.getElementById('cartSub');
+  if (!listEl) return;
+
+  if (cart.length === 0) {
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-text">Your cart is empty.</div></div>';
+    if (sumEl) sumEl.style.display = 'none';
+    if (subEl) subEl.textContent = '0 items';
+    return;
+  }
+
+  var total_items = cart.reduce(function(s,i){ return s+i.qty; }, 0);
+  if (subEl) subEl.textContent = total_items + ' item' + (total_items!==1?'s':'');
+  if (sumEl) sumEl.style.display = '';
+
+  listEl.innerHTML = '';
+  var subtotal = 0;
+
+  cart.forEach(function(item, idx) {
+    var it = item.price * item.qty;
+    subtotal += it;
+    var row = document.createElement('div');
+    row.className = 'cart-row';
+    row.innerHTML =
+      '<div class="cart-info"><div class="cart-name">'+item.name+'</div><div class="cart-unit">$'+item.price.toFixed(2)+' each</div></div>' +
+      '<div class="qty-ctrl">' +
+        '<button class="qty-btn" onclick="cQty('+idx+',-1)">-</button>' +
+        '<div class="qty-val">'+item.qty+'</div>' +
+        '<button class="qty-btn" onclick="cQty('+idx+',1)">+</button>' +
+      '</div>' +
+      '<div class="cart-subtotal">$'+it.toFixed(2)+'</div>' +
+      '<button class="remove-btn" onclick="removeItem('+idx+')">Remove</button>';
+    listEl.appendChild(row);
+  });
+
+  /* BUG-H5: $2 handling fee added but no line item displayed */
+  var total = subtotal + HANDLING_FEE;
+  var stEl = document.getElementById('cartSubtotalVal');
+  var ttEl = document.getElementById('cartTotalVal');
+  if (stEl) stEl.textContent = '$' + subtotal.toFixed(2);
+  if (ttEl) ttEl.textContent = '$' + total.toFixed(2);
+}
+
+function cQty(idx, d) {
+  cart[idx].qty += d;
+  if (cart[idx].qty <= 0) cart.splice(idx, 1);
+  renderCart(); updatePill();
+}
+function removeItem(idx) { cart.splice(idx,1); renderCart(); updatePill(); }
+
+function applyDiscount() {
+  var code = ((document.getElementById('discountInp')||{}).value||'').trim().toUpperCase();
+  if (!code) return;
+  mockAPI('POST', '/api/discount/validate', { code:code }).then(function(res) {
+    var el = document.getElementById('discountMsg');
+    if (!el) return;
+    if (res.body.success) {
+      /* BUG-H3: API returns discount:0.15 but we NEVER apply it to the total */
+      el.textContent = 'Discount Applied! Save 15%';
+      el.className = 'd-msg d-ok';
+      el.style.display = '';
+      /* Total remains unchanged - discount value is ignored */
+    } else {
+      el.textContent = 'Invalid code. Try SAVE15.';
+      el.className = 'd-msg d-err';
+      el.style.display = '';
+    }
+  });
+}
+
+/* BUG-H1 implementation:
+   Button is NOT disabled synchronously before the async call.
+   Two rapid clicks both pass through before either Promise resolves.
+   Each resolved callback saves a new order → duplicate orders. */
+function placeOrder() {
+  if (cart.length === 0) return;
+  var sub = cart.reduce(function(s,i){ return s+i.price*i.qty; }, 0);
+  var total = sub + HANDLING_FEE;
+  var payload = {
+    items: cart.map(function(i){ return { id:i.id, name:i.name, qty:i.qty, price:i.price }; }),
+    subtotal: sub, total: total
+  };
+  /* BUG-H1: should do document.getElementById('placeBtn').disabled = true HERE, before the call */
+  mockAPI('POST', '/api/orders', payload).then(function(res) {
+    if (res.status === 401) return; /* BUG-H4: silent fail */
+    if (res.body.success) {
+      var orders = JSON.parse(localStorage.getItem('sl_orders')||'[]');
+      orders.unshift({ orderId:res.body.orderId, items:payload.items, subtotal:sub, total:total, ts:new Date().toISOString() });
+      localStorage.setItem('sl_orders', JSON.stringify(orders));
+      cart = [];
+      updatePill(); renderCart();
+      toast('Order placed: ' + res.body.orderId);
+      /* BUG-UX: no confirmation screen, no order summary modal, just a toast */
+    }
+  });
+}
+
+/* ── Orders ── */
+function renderOrders() {
+  var el = document.getElementById('orderList');
+  if (!el) return;
+  var orders = JSON.parse(localStorage.getItem('sl_orders')||'[]');
+  if (!orders.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">No orders yet.</div></div>';
+    return;
+  }
+  el.innerHTML = orders.map(function(o) {
+    return '<div class="order-card">' +
+      '<div class="order-hdr"><span class="order-id">'+o.orderId+'</span><span class="order-time">'+new Date(o.ts).toLocaleString()+'</span></div>' +
+      '<div class="order-items">'+o.items.map(function(i){ return i.name+' x'+i.qty; }).join(', ')+'</div>' +
+      '<div class="order-total">Total: $'+o.total.toFixed(2)+'</div>' +
+    '</div>';
+  }).join('');
+}
+
+/* ── Contact ── */
+function updateCharCount() {
+  var ta = document.getElementById('cMsg');
+  var el = document.getElementById('charCount');
+  if (!ta || !el) return;
+  var max = parseInt(ta.getAttribute('maxlength')) || 200;
+  /* BUG-N-bonus: subtracts 1 extra → shows 199 when empty, always 1 less than correct */
+  el.textContent = (max - ta.value.length - 1) + ' left';
+}
+
+function submitContact() {
+  var name  = (document.getElementById('cName')||{}).value  || '';
+  var email = (document.getElementById('cEmail')||{}).value || '';
+  var subj  = (document.getElementById('cSubject')||{}).value || '';
+  var msg   = (document.getElementById('cMsg')||{}).value   || '';
+
+  /* BUG-N5: no required-field validation - submits even when name + email are blank */
+  mockAPI('POST', '/api/contact', { name:name, email:email, subject:subj, message:msg }).then(function(res) {
+    /* BUG: only checks HTTP status (200), not res.body.success
+       So duplicate email gets "Message sent!" even though API says success:false */
+    if (res.status === 200) {
+      toast('Message sent! We will be in touch.');
+      ['cName','cEmail','cSubject','cMsg'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      updateCharCount();
+    }
+  });
+}
+
+/* ── Toast ── */
+function toast(msg) {
+  var old = document.querySelector('.sl-toast');
+  if (old && old.parentNode) old.parentNode.removeChild(old);
+  var t = document.createElement('div');
+  t.className = 'sl-toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){ t.classList.add('show'); }); });
+  setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 250); }, 3000);
+}
+
+/* ── Init ── */
+renderProducts();
+</script>
+</body>
+</html>
