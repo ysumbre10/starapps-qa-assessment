@@ -91,10 +91,13 @@ async function evaluate(task, apiKey) {
     const text  = data.content?.[0]?.text || '';
 
     // Extract the JSON object Claude returns: { score: N, feedback: "..." }
-    const match = text.match(/\{[\s\S]*?\}/);
-    if (match) {
+    // Use lastIndexOf('}') so the match spans the full object even if the
+    // feedback text contains '{' or '}' characters.
+    const start = text.indexOf('{');
+    const end   = text.lastIndexOf('}');
+    if (start !== -1 && end > start) {
       try {
-        const parsed = JSON.parse(match[0]);
+        const parsed = JSON.parse(text.slice(start, end + 1));
         return {
           domain,
           taskTitle,

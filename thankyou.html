@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Done — QA Skill Check</title>
+  <title>Done - QA Skill Check</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -26,13 +26,13 @@
       <div class="thankyou-hero animate-in">
         <div class="check-circle">✓</div>
         <h1>Done.</h1>
-        <p>Answers recorded. MCQ scores below — open tasks are AI-evaluated and reviewed by our team.</p>
+        <p>Answers recorded. MCQ scores are auto-graded. Open tasks are reviewed by our team.</p>
       </div>
 
       <div class="summary-grid animate-in delay-1">
         <div class="summary-stat">
-          <div class="stat-num" id="statMcq">—</div>
-          <div class="stat-label">MCQ / 21</div>
+          <div class="stat-num" id="statTotal">—</div>
+          <div class="stat-label">Total Marks</div>
         </div>
         <div class="summary-stat">
           <div class="stat-num" id="statDomains">—</div>
@@ -44,14 +44,28 @@
         </div>
       </div>
 
-      <div class="card animate-in delay-2" style="margin-bottom:16px;">
-        <div id="scoreBreakdown"></div>
+      <!-- Marks key -->
+      <div class="marks-legend animate-in delay-2">
+        <div class="marks-legend-item">
+          <strong>MCQ</strong>
+          2 marks per correct answer
+        </div>
+        <div class="marks-legend-item">
+          <strong>Open Task</strong>
+          Scored 0–10 per task × 2 tasks = 20 max per domain
+        </div>
+        <div class="marks-legend-item">
+          <strong>Manual Testing</strong>
+          14 marks (7 MCQs, no open tasks)
+        </div>
+        <div class="marks-legend-item">
+          <strong>Grand Total</strong>
+          224 marks
+        </div>
       </div>
 
-      <div class="card card-sm animate-in delay-3" style="text-align:center;margin-bottom:40px;">
-        <a id="shareBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
-          Share on LinkedIn
-        </a>
+      <div class="card animate-in delay-2" style="margin-bottom:16px;">
+        <div id="scoreBreakdown"></div>
       </div>
 
     </div>
@@ -69,41 +83,124 @@
 <script src="config.js"></script>
 <script src="assessment.js"></script>
 <script>
+  /* ── Guard ── */
+  if (!sessionStorage.getItem('qa_candidate')) {
+    window.location.href = 'index.html';
+  }
+
+  /* ── Marks scheme ── */
+  var MCQ_MARKS_PER_Q = 2;   // per correct MCQ answer
+  var TASK_MARKS_MAX  = 10;  // scored 0-10 per task by our team
+  // Grand total is dynamic: Manual Testing has 7 MCQs + 0 tasks; other domains 5 MCQs + 2 tasks
+  var GRAND_MAX = DOMAINS.reduce(function (sum, d) {
+    return sum + d.mcqs.length * MCQ_MARKS_PER_Q + d.tasks.length * TASK_MARKS_MAX;
+  }, 0); // 224
+
+  /* ── Raw data ── */
   var responses = JSON.parse(sessionStorage.getItem('qa_responses') || '{}');
   var timings   = JSON.parse(sessionStorage.getItem('qa_timings')   || '{}');
 
-  var totalMcq = 0, domainsCompleted = 0, timingValues = [];
+  /* ── Build AI score lookup: "Domain::Task Title" → { score, feedback } ── */
+  var aiMap = {};
+  try {
+    var aiRaw = sessionStorage.getItem('qa_ai_scores');
+    if (aiRaw) {
+      var aiData = JSON.parse(aiRaw);
+      (aiData.scores || []).forEach(function (s) {
+        aiMap[s.domain + '::' + s.taskTitle] = s;
+      });
+    }
+  } catch (e) {}
 
-  DOMAINS.forEach(function(d) {
+  /* ── Totals ── */
+  var totalMcqMarks = 0, totalAiMarks = 0;
+  var domainsCompleted = 0, timingValues = [];
+  var aiTasksScored = 0, aiTasksExpected = 0;
+
+  DOMAINS.forEach(function (d) {
     var resp = responses['domain_' + d.id];
-    if (resp) { domainsCompleted++; totalMcq += resp.mcqScore || 0; }
+    if (resp) {
+      domainsCompleted++;
+      totalMcqMarks += (resp.mcqScore || 0) * MCQ_MARKS_PER_Q;
+      aiTasksExpected += d.tasks.length;
+      d.tasks.forEach(function (task) {
+        var ai = aiMap[d.domain + '::' + task.title];
+        if (ai && typeof ai.score === 'number') {
+          totalAiMarks += ai.score;
+          aiTasksScored++;
+        }
+      });
+    }
     var t = timings['domain_' + d.id + '_secs'];
     if (t) timingValues.push(t);
   });
 
-  var avgSecs = timingValues.length ? Math.round(timingValues.reduce(function(a,b){return a+b;}, 0) / timingValues.length) : 0;
-  document.getElementById('statMcq').textContent     = `${totalMcq}/21`;
-  document.getElementById('statDomains').textContent = `${domainsCompleted}/7`;
-  document.getElementById('statAvgTime').textContent = `${Math.floor(avgSecs/60)}m${String(avgSecs%60).padStart(2,'0')}s`;
+  var totalMarks  = totalMcqMarks + totalAiMarks;
+  var allAiDone   = aiTasksScored === aiTasksExpected && aiTasksExpected > 0;
 
+  /* ── Summary stats ── */
+  var avgSecs = timingValues.length
+    ? Math.round(timingValues.reduce(function (a, b) { return a + b; }, 0) / timingValues.length)
+    : 0;
+
+  document.getElementById('statTotal').textContent   = totalMarks + (allAiDone ? '' : '+') + ' / ' + GRAND_MAX;
+  document.getElementById('statDomains').textContent = domainsCompleted + ' / ' + DOMAINS.length;
+  document.getElementById('statAvgTime').textContent = Math.floor(avgSecs / 60) + 'm' + String(avgSecs % 60).padStart(2, '0') + 's';
+
+  /* ── Per-domain score breakdown ── */
   var el = document.getElementById('scoreBreakdown');
-  DOMAINS.forEach(function(d) {
-    var resp  = responses['domain_' + d.id];
-    var row   = document.createElement('div');
+
+  DOMAINS.forEach(function (d) {
+    var resp = responses['domain_' + d.id];
+    var row  = document.createElement('div');
     row.className = 'score-row';
-    var score = (resp && resp.mcqScore != null) ? resp.mcqScore : null;
+
+    if (!resp) {
+      row.innerHTML =
+        '<div class="score-domain">' + d.domain + '</div>' +
+        '<div class="score-badges"><span class="ai-pending">Not attempted</span></div>';
+      el.appendChild(row);
+      return;
+    }
+
+    /* Per-domain max (Manual Testing: 7×2=14, others: 5×2+2×10=30) */
+    var domainMcqMax = d.mcqs.length * MCQ_MARKS_PER_Q;
+    var domainMax    = domainMcqMax + d.tasks.length * TASK_MARKS_MAX;
+
+    /* MCQ marks */
+    var mcqScore   = resp.mcqScore || 0;
+    var mcqMarks   = mcqScore * MCQ_MARKS_PER_Q;
+    var mcqPerfect = mcqScore === d.mcqs.length;
+    var mcqBadge   = '<span class="mcq-score-badge' + (mcqPerfect ? ' perfect' : '') + '">MCQ ' + mcqMarks + '/' + domainMcqMax + '</span>';
+
+    /* Task marks */
+    var taskBadges   = '';
+    var domainTotal  = mcqMarks;
+    var allTasksDone = true;
+
+    d.tasks.forEach(function (task, ti) {
+      var ai = aiMap[d.domain + '::' + task.title];
+      if (ai && typeof ai.score === 'number') {
+        var cls = ai.score >= 8 ? ' high' : (ai.score < 5 ? ' low' : '');
+        taskBadges += '<span class="task-mark-badge' + cls + '">T' + (ti + 1) + ': ' + ai.score + '/10</span>';
+        domainTotal += ai.score;
+      } else {
+        taskBadges  += '<span class="score-pending">T' + (ti + 1) + ': —/10</span>';
+        allTasksDone = false;
+      }
+    });
+
+    /* Domain total */
+    var totalStr   = allTasksDone ? domainTotal + '/' + domainMax : domainTotal + '+/' + domainMax;
+    var totalCls   = (allTasksDone && domainTotal === domainMax) ? ' perfect' : '';
+    var totalBadge = '<span class="domain-total-badge' + totalCls + '">' + totalStr + '</span>';
+
     row.innerHTML =
       '<div class="score-domain">' + d.domain + '</div>' +
-      '<div class="score-badges">' +
-        (score !== null
-          ? '<span class="mcq-score-badge' + (score === 3 ? ' perfect' : '') + '">' + score + '/3 MCQ</span><span class="ai-pending">tasks · AI review</span>'
-          : '<span class="ai-pending">Not attempted</span>') +
-      '</div>';
+      '<div class="score-badges">' + mcqBadge + taskBadges + totalBadge + '</div>';
+
     el.appendChild(row);
   });
-
-  var shareText = encodeURIComponent('I just completed the QA Skill Check by Starapps Studio — 7 real-world domains. Think you can beat my score?');
-  document.getElementById('shareBtn').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(window.location.origin + '/index.html') + '&summary=' + shareText;
 </script>
 
 </body>

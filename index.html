@@ -26,7 +26,7 @@
 
       <div style="margin-bottom:32px;" class="animate-in">
         <h1 style="font-family:var(--font-display);font-size:clamp(32px,5vw,48px);font-weight:800;letter-spacing:-2px;margin-bottom:10px;">
-          7 domains. 10 min each.<br /><span style="color:var(--lime);">Prove your QA skills.</span>
+          7 domains. 10 min each.<br /><span style="color:var(--green);">Prove your QA skills.</span>
         </h1>
         <p style="color:var(--text-2);font-size:15px;">Fill in your details to begin.</p>
       </div>
@@ -38,11 +38,13 @@
             <div class="form-group">
               <label for="fullName">Full Name <span class="required">*</span></label>
               <input type="text" id="fullName" name="fullName" placeholder="Jane Smith" required autocomplete="name" />
+              <span class="field-error" id="fullNameError" aria-live="polite"></span>
             </div>
 
             <div class="form-group">
               <label for="email">Email <span class="required">*</span></label>
               <input type="email" id="email" name="email" placeholder="jane@company.com" required autocomplete="email" />
+              <span class="field-error" id="emailError" aria-live="polite"></span>
             </div>
 
             <div class="form-group">
@@ -55,6 +57,7 @@
                 <option value="5-10">5 – 10 years</option>
                 <option value="10+">10+ years</option>
               </select>
+              <span class="field-error" id="experienceError" aria-live="polite"></span>
             </div>
 
             <div class="form-group">
@@ -69,32 +72,14 @@
                 <option value="freelance">Freelance QA</option>
                 <option value="other">Other</option>
               </select>
-            </div>
-
-            <div class="form-group">
-              <label for="domain">Primary Domain <span class="required">*</span></label>
-              <select id="domain" name="domain" required>
-                <option value="" disabled selected>Select domain</option>
-                <option value="web">Web Applications</option>
-                <option value="mobile">Mobile (iOS / Android)</option>
-                <option value="api">API / Microservices</option>
-                <option value="backend">Back-End / Data</option>
-                <option value="ai-ml">AI / ML Systems</option>
-                <option value="embedded">Embedded / Hardware</option>
-                <option value="mixed">Mixed / Full-Stack</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="linkedin">LinkedIn <span style="color:var(--text-3);font-weight:400;">(optional)</span></label>
-              <input type="text" id="linkedin" name="linkedin" placeholder="linkedin.com/in/yourhandle" autocomplete="off" />
+              <span class="field-error" id="roleError" aria-live="polite"></span>
             </div>
 
           </div>
 
-          <div id="formError" class="notice notice-danger" style="display:none;margin-top:16px;">
+          <div id="formError" class="notice notice-danger" style="display:none;margin-top:16px;" role="alert">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-            <span id="formErrorMsg">Please fill in all required fields.</span>
+            <span id="formErrorMsg">Please complete all required fields above.</span>
           </div>
 
           <button type="submit" class="btn btn-primary btn-lg btn-full" id="startBtn" style="margin-top:20px;">
@@ -116,52 +101,117 @@
 </div>
 
 <script>
+  // ── Per-field error messages ─────────────────────────────────────────────
+  function getError(id, value) {
+    switch (id) {
+      case 'fullName':
+        if (!value.trim()) return 'Please enter your full name.';
+        if (value.trim().length < 2) return 'Name must be at least 2 characters.';
+        return '';
+      case 'email':
+        if (!value.trim()) return 'Please enter your email address.';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return 'Please enter a valid email (e.g. jane@company.com).';
+        return '';
+      case 'experience':
+        return value ? '' : 'Please select your experience level.';
+      case 'role':
+        return value ? '' : 'Please select your current role.';
+      default:
+        return '';
+    }
+  }
+
+  // ── Apply / clear error state on a field ────────────────────────────────
+  function setFieldState(id, errorMsg) {
+    var el  = document.getElementById(id);
+    var err = document.getElementById(id + 'Error');
+    if (errorMsg) {
+      el.classList.add('input-error');
+      el.classList.remove('input-valid');
+      if (err) err.textContent = errorMsg;
+    } else {
+      el.classList.remove('input-error');
+      el.classList.add('input-valid');
+      if (err) err.textContent = '';
+    }
+  }
+
+  // ── Validate a single field; return true if valid ───────────────────────
+  function validateField(id) {
+    var el  = document.getElementById(id);
+    var msg = getError(id, el.value);
+    setFieldState(id, msg);
+    return msg === '';
+  }
+
+  // ── Attach blur + live-correction listeners ──────────────────────────────
+  var FIELDS = ['fullName', 'email', 'experience', 'role'];
+
+  FIELDS.forEach(function (id) {
+    var el = document.getElementById(id);
+
+    // Validate on blur (first time user leaves the field)
+    el.addEventListener('blur', function () {
+      validateField(id);
+    });
+
+    // Once the field has been touched, re-validate on every change
+    // so errors clear as soon as the user fixes them
+    var eventName = (el.tagName === 'SELECT') ? 'change' : 'input';
+    el.addEventListener(eventName, function () {
+      if (el.classList.contains('input-error') || el.classList.contains('input-valid')) {
+        validateField(id);
+      }
+    });
+  });
+
+  // ── Submit ───────────────────────────────────────────────────────────────
   document.getElementById('registrationForm').addEventListener('submit', function (e) {
     e.preventDefault();
 
-    const fields = ['fullName', 'email', 'experience', 'role', 'domain'];
-    let valid = true;
+    // Validate all fields; force state even on untouched ones
+    var allValid = FIELDS.reduce(function (acc, id) {
+      return validateField(id) && acc;
+    }, true);
 
-    fields.forEach(id => {
-      const el = document.getElementById(id);
-      if (!el.value.trim()) { el.style.borderColor = 'var(--red)'; valid = false; }
-      else el.style.borderColor = '';
-    });
+    var errBanner = document.getElementById('formError');
+    var errMsg    = document.getElementById('formErrorMsg');
 
-    const emailEl = document.getElementById('email');
-    if (emailEl.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value)) {
-      emailEl.style.borderColor = 'var(--red)'; valid = false;
-    }
+    if (!allValid) {
+      // Count how many fields failed
+      var failed = FIELDS.filter(function (id) {
+        return document.getElementById(id).classList.contains('input-error');
+      });
 
-    if (!valid) {
-      const err = document.getElementById('formError');
-      err.style.display = 'flex';
-      err.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (failed.length === 1) {
+        errMsg.textContent = 'One field needs attention - check the error above.';
+      } else {
+        errMsg.textContent = failed.length + ' fields need attention - check the errors above.';
+      }
+
+      errBanner.style.display = 'flex';
+      // Scroll to the first errored field
+      var firstErr = document.getElementById(failed[0]);
+      if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
-    document.getElementById('formError').style.display = 'none';
+    errBanner.style.display = 'none';
 
     sessionStorage.setItem('qa_candidate', JSON.stringify({
       fullName:   document.getElementById('fullName').value.trim(),
       email:      document.getElementById('email').value.trim(),
       experience: document.getElementById('experience').value,
       role:       document.getElementById('role').value,
-      domain:     document.getElementById('domain').value,
-      linkedin:   document.getElementById('linkedin').value.trim(),
       startedAt:  new Date().toISOString()
     }));
     sessionStorage.setItem('qa_responses', JSON.stringify({}));
     sessionStorage.setItem('qa_timings',   JSON.stringify({}));
 
-    const btn = document.getElementById('startBtn');
+    var btn = document.getElementById('startBtn');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Loading...';
-    setTimeout(() => { window.location.href = 'instructions.html'; }, 400);
-  });
-
-  ['fullName','email','experience','role','domain'].forEach(id => {
-    document.getElementById(id).addEventListener('input', function () { this.style.borderColor = ''; });
+    setTimeout(function () { window.location.href = 'instructions.html'; }, 400);
   });
 </script>
 

@@ -307,8 +307,6 @@ async function submitAllToSheets() {
     email:       candidate.email,
     experience:  candidate.experience,
     role:        candidate.role,
-    domain:      candidate.domain,
-    linkedin:    candidate.linkedin || '',
     totalMcqScore: 0,
     totalDomains: DOMAINS.length
   };

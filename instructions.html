@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Instructions — QA Skill Check</title>
+  <title>Instructions - QA Skill Check</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -30,9 +30,9 @@
 
       <div class="card animate-in delay-1" style="margin-bottom:16px;">
         <ol class="rules-list">
-          <li><div class="rule-num">1</div><div class="rule-text"><strong>7 domains</strong> — one at a time. You can't go back.</div></li>
-          <li><div class="rule-num">2</div><div class="rule-text"><strong>10 minutes per domain</strong> — covers 3 MCQs + 2 open tasks. Auto-submits at zero.</div></li>
-          <li><div class="rule-num">3</div><div class="rule-text"><strong>MCQs are auto-graded.</strong> Open tasks are evaluated by AI.</div></li>
+          <li><div class="rule-num">1</div><div class="rule-text"><strong>8 domains</strong>, one at a time. You can't go back.</div></li>
+          <li><div class="rule-num">2</div><div class="rule-text"><strong>10 minutes per domain.</strong> Domain 1 is MCQ only. Domains 2-8 have 5 MCQs + 2 open tasks. Auto-submits at zero.</div></li>
+          <li><div class="rule-num">3</div><div class="rule-text"><strong>MCQs are auto-graded.</strong> Open tasks are reviewed by our team.</div></li>
           <li><div class="rule-num">4</div><div class="rule-text"><strong>No AI tools</strong> to generate answers. Use your own knowledge.</div></li>
           <li><div class="rule-num">5</div><div class="rule-text"><strong>Stable connection required.</strong> Answers save on submit only.</div></li>
         </ol>
@@ -47,7 +47,7 @@
       </div>
 
       <button id="beginBtn" class="btn btn-primary btn-lg btn-full animate-in delay-3">
-        Begin Assessment — Domain 1 of 7 →
+        Begin Assessment - Domain 1 of 8
       </button>
 
     </div>
@@ -71,10 +71,17 @@
   }
 
   document.getElementById('beginBtn').addEventListener('click', function () {
+    // If the assessment is already in progress, go to the current domain
+    // instead of resetting the index back to 0.
+    var current = parseInt(sessionStorage.getItem('qa_current_task') || '-1', 10);
+    if (current > 0) {
+      window.location.href = 'assessment.html';
+      return;
+    }
     this.disabled = true;
     this.innerHTML = '<span class="spinner"></span> Starting...';
     sessionStorage.setItem('qa_current_task', '0');
-    setTimeout(() => { window.location.href = 'assessment.html'; }, 400);
+    setTimeout(function () { window.location.href = 'assessment.html'; }, 400);
   });
 </script>
 
