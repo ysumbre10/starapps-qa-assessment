@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Instructions — QA Skill Check</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
 </head>
 <body>
 
@@ -22,144 +20,61 @@
     </div>
   </header>
 
-  <main>
-    <div class="container" style="padding-top:48px;padding-bottom:64px;">
+  <main style="padding:48px 0 80px;">
+    <div class="container">
 
-      <div style="margin-bottom:32px;">
-        <h1 style="font-size:32px;font-weight:700;letter-spacing:-1px;margin-bottom:10px;">Before you begin</h1>
-        <p style="color:var(--text-muted);font-size:17px;">Read these rules carefully. The assessment starts the moment you click <strong style="color:var(--text)">Begin Assessment</strong>.</p>
+      <div style="margin-bottom:32px;" class="animate-in">
+        <h1 style="font-family:var(--font-display);font-size:36px;font-weight:800;letter-spacing:-1.5px;margin-bottom:8px;">Before you begin</h1>
+        <p style="color:var(--text-2);font-size:15px;">Read the rules. The timer starts the moment you click Begin.</p>
       </div>
 
-      <!-- Rules -->
-      <div class="card" style="margin-bottom:24px;">
-        <h2 style="font-size:18px;font-weight:700;margin-bottom:24px;">Rules &amp; Format</h2>
+      <div class="card animate-in delay-1" style="margin-bottom:16px;">
         <ol class="rules-list">
-          <li>
-            <div class="rule-num">1</div>
-            <div class="rule-text"><strong>7 tasks, one at a time.</strong> You will see one task at a time. The next task only appears after you submit the current one.</div>
-          </li>
-          <li>
-            <div class="rule-num">2</div>
-            <div class="rule-text"><strong>10 minutes per domain.</strong> Each domain has 3 MCQs + 2 open tasks. One shared countdown covers all 5 items. When it reaches zero, everything is automatically submitted — even if incomplete.</div>
-          </li>
-          <li>
-            <div class="rule-num">3</div>
-            <div class="rule-text"><strong>No going back.</strong> Once a task is submitted, it is locked. You cannot edit previous answers.</div>
-          </li>
-          <li>
-            <div class="rule-num">4</div>
-            <div class="rule-text"><strong>Open-ended answers.</strong> There are no multiple-choice options. Type your answers in the provided text area. Code, lists, and plain prose are all fine.</div>
-          </li>
-          <li>
-            <div class="rule-num">5</div>
-            <div class="rule-text"><strong>No collaboration tools.</strong> You may use documentation and your own knowledge. This is an individual assessment — please do not use AI assistants to generate your answers.</div>
-          </li>
-          <li>
-            <div class="rule-num">6</div>
-            <div class="rule-text"><strong>You can submit early.</strong> If you finish a task before the 10 minutes are up, click <em>Submit &amp; Next Task</em> to move on immediately.</div>
-          </li>
-          <li>
-            <div class="rule-num">7</div>
-            <div class="rule-text"><strong>Stable connection required.</strong> Answers are saved when you submit each task. If your browser closes mid-task, that task's answer may be lost.</div>
-          </li>
+          <li><div class="rule-num">1</div><div class="rule-text"><strong>7 domains</strong> — one at a time. You can't go back.</div></li>
+          <li><div class="rule-num">2</div><div class="rule-text"><strong>10 minutes per domain</strong> — covers 3 MCQs + 2 open tasks. Auto-submits at zero.</div></li>
+          <li><div class="rule-num">3</div><div class="rule-text"><strong>MCQs are auto-graded.</strong> Open tasks are evaluated by AI.</div></li>
+          <li><div class="rule-num">4</div><div class="rule-text"><strong>No AI tools</strong> to generate answers. Use your own knowledge.</div></li>
+          <li><div class="rule-num">5</div><div class="rule-text"><strong>Stable connection required.</strong> Answers save on submit only.</div></li>
         </ol>
       </div>
 
-      <!-- What's covered -->
-      <div class="card" style="margin-bottom:24px;">
-        <h2 style="font-size:18px;font-weight:700;margin-bottom:4px;">What you'll be assessed on</h2>
-        <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;">7 domains · 3 MCQs + 2 open tasks each · 10 minutes per domain</p>
-        <div class="domain-list">
-          <div class="domain-item"><span class="num">01</span> API Testing</div>
-          <div class="domain-item"><span class="num">02</span> Back-End Debugging</div>
-          <div class="domain-item"><span class="num">03</span> DB Log Reading</div>
-          <div class="domain-item"><span class="num">04</span> Test Automation</div>
-          <div class="domain-item"><span class="num">05</span> Root Cause Analysis</div>
-          <div class="domain-item"><span class="num">06</span> Complex Systems</div>
-          <div class="domain-item"><span class="num">07</span> AI in QA</div>
-        </div>
-      </div>
-
-      <!-- Format explainer -->
-      <div class="card" style="margin-bottom:24px;">
-        <h2 style="font-size:18px;font-weight:700;margin-bottom:14px;">Format per domain</h2>
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <div style="display:flex;gap:14px;align-items:flex-start;">
-            <div class="section-icon mcq-icon" style="width:32px;height:32px;font-size:10px;">MCQ</div>
-            <div>
-              <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px;">3 Multiple Choice Questions</div>
-              <div style="font-size:13px;color:var(--text-muted);">Select one answer per question. Auto-graded instantly.</div>
-            </div>
-          </div>
-          <div style="display:flex;gap:14px;align-items:flex-start;">
-            <div class="section-icon task-icon" style="width:32px;height:32px;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            </div>
-            <div>
-              <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px;">2 Open Tasks</div>
-              <div style="font-size:13px;color:var(--text-muted);">Real-world scenarios. Write your answer in the text area. Evaluated by AI with a domain-specific rubric.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Scoring note -->
-      <div class="card" style="margin-bottom:24px;">
-        <h2 style="font-size:18px;font-weight:700;margin-bottom:8px;">How answers are evaluated</h2>
-        <p style="color:var(--text-muted);font-size:14px;line-height:1.7;">
-          There are no automated scores. Every response is reviewed by a human QA practitioner at Starapps Studio. We are looking for <strong style="color:var(--text)">structured thinking</strong>, not keyword matching. A shorter, well-reasoned answer scores higher than a long, unfocused one.
-        </p>
-      </div>
-
-      <!-- Candidate name confirmation -->
-      <div class="card card-sm" style="margin-bottom:32px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+      <div class="card card-sm animate-in delay-2" style="margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
         <div>
-          <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:4px;">Registered as</div>
-          <div id="candidateName" style="font-size:16px;font-weight:600;color:var(--text);">—</div>
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Registered as</div>
+          <div id="candidateName" style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text);">—</div>
         </div>
-        <a href="index.html" class="btn btn-ghost" style="font-size:13px;padding:8px 16px;">Not you? Go back</a>
+        <a href="index.html" class="btn btn-ghost" style="font-size:13px;padding:8px 16px;">Not you?</a>
       </div>
 
-      <div class="notice notice-danger">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <div><strong>Clicking the button below starts your first 10-minute timer immediately.</strong> Make sure you are ready before proceeding.</div>
-      </div>
-
-      <div style="margin-top:24px;">
-        <button id="beginBtn" class="btn btn-primary btn-lg btn-full">
-          Begin Assessment — Task 1 of 7 →
-        </button>
-      </div>
+      <button id="beginBtn" class="btn btn-primary btn-lg btn-full animate-in delay-3">
+        Begin Assessment — Domain 1 of 7 →
+      </button>
 
     </div>
   </main>
 
   <footer>
     <div class="container">
-      <img src="logo.png" alt="Starapps Studio" style="height:20px;filter:brightness(0) invert(1);opacity:0.4;vertical-align:middle;margin-right:8px;" />
-      &copy; 2025 · QA Skill Check
+      <img src="logo.png" alt="Starapps Studio" style="height:18px;filter:brightness(0) invert(1);opacity:0.3;vertical-align:middle;margin-right:10px;" />
+      © 2025 · QA Skill Check
     </div>
   </footer>
 
 </div>
 
 <script>
-  // Guard: redirect to index if no candidate data
-  const candidateRaw = sessionStorage.getItem('qa_candidate');
-  if (!candidateRaw) {
-    window.location.href = 'index.html';
-  } else {
-    const candidate = JSON.parse(candidateRaw);
-    document.getElementById('candidateName').textContent = candidate.fullName + ' · ' + candidate.email;
+  const raw = sessionStorage.getItem('qa_candidate');
+  if (!raw) { window.location.href = 'index.html'; }
+  else {
+    const c = JSON.parse(raw);
+    document.getElementById('candidateName').textContent = c.fullName + ' · ' + c.email;
   }
 
   document.getElementById('beginBtn').addEventListener('click', function () {
     this.disabled = true;
     this.innerHTML = '<span class="spinner"></span> Starting...';
     sessionStorage.setItem('qa_current_task', '0');
-    setTimeout(() => {
-      window.location.href = 'assessment.html';
-    }, 500);
+    setTimeout(() => { window.location.href = 'assessment.html'; }, 400);
   });
 </script>
 

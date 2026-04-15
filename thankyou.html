@@ -3,10 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Submitted — QA Skill Check</title>
+  <title>Done — QA Skill Check</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
 </head>
 <body>
 
@@ -22,64 +20,36 @@
     </div>
   </header>
 
-  <main>
+  <main style="padding:64px 0 80px;">
     <div class="container">
 
-      <!-- Hero -->
-      <div class="thankyou-hero">
+      <div class="thankyou-hero animate-in">
         <div class="check-circle">✓</div>
-        <h1>Assessment Complete</h1>
-        <p>Your answers have been recorded. MCQ scores are shown below — open task answers are evaluated by AI and reviewed by our team.</p>
+        <h1>Done.</h1>
+        <p>Answers recorded. MCQ scores below — open tasks are AI-evaluated and reviewed by our team.</p>
       </div>
 
-      <!-- MCQ Score Summary -->
-      <div class="summary-grid" id="summaryGrid">
+      <div class="summary-grid animate-in delay-1">
         <div class="summary-stat">
           <div class="stat-num" id="statMcq">—</div>
-          <div class="stat-label">MCQ Score (out of 21)</div>
+          <div class="stat-label">MCQ / 21</div>
         </div>
         <div class="summary-stat">
           <div class="stat-num" id="statDomains">—</div>
-          <div class="stat-label">Domains Completed</div>
+          <div class="stat-label">Domains Done</div>
         </div>
         <div class="summary-stat">
           <div class="stat-num" id="statAvgTime">—</div>
-          <div class="stat-label">Avg. Time Per Domain</div>
+          <div class="stat-label">Avg per Domain</div>
         </div>
       </div>
 
-      <!-- Per-domain breakdown -->
-      <div class="card" style="margin-bottom:24px;">
-        <h2 style="font-size:18px;font-weight:700;margin-bottom:6px;">Score Breakdown</h2>
-        <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">MCQs are auto-graded. Open tasks are evaluated by AI — scores will appear in your recruiter's review.</p>
+      <div class="card animate-in delay-2" style="margin-bottom:16px;">
         <div id="scoreBreakdown"></div>
       </div>
 
-      <!-- What's next -->
-      <div class="card" style="margin-bottom:24px;">
-        <h2 style="font-size:18px;font-weight:700;margin-bottom:14px;">What happens next</h2>
-        <ul style="list-style:none;display:flex;flex-direction:column;gap:14px;">
-          <li style="display:flex;gap:12px;font-size:14px;color:var(--text-muted);">
-            <span style="color:var(--accent);font-weight:700;flex-shrink:0;">01</span>
-            Your open task answers are being evaluated by AI using domain-specific rubrics, then reviewed by a senior QA practitioner at Starapps Studio.
-          </li>
-          <li style="display:flex;gap:12px;font-size:14px;color:var(--text-muted);">
-            <span style="color:var(--accent);font-weight:700;flex-shrink:0;">02</span>
-            If there's a strong match, we'll reach out via the email you provided — typically within 3–5 business days.
-          </li>
-          <li style="display:flex;gap:12px;font-size:14px;color:var(--text-muted);">
-            <span style="color:var(--accent);font-weight:700;flex-shrink:0;">03</span>
-            Anonymized aggregate insights from this assessment may be shared publicly on LinkedIn.
-          </li>
-        </ul>
-      </div>
-
-      <!-- Share -->
-      <div class="card card-sm" style="text-align:center;margin-bottom:48px;">
-        <p style="font-size:14px;color:var(--text-muted);margin-bottom:16px;">
-          Know a QA engineer who should take this? Share the challenge.
-        </p>
-        <a id="shareBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-ghost" style="display:inline-flex;">
+      <div class="card card-sm animate-in delay-3" style="text-align:center;margin-bottom:40px;">
+        <a id="shareBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
           Share on LinkedIn
         </a>
       </div>
@@ -89,85 +59,51 @@
 
   <footer>
     <div class="container">
-      <img src="logo.png" alt="Starapps Studio" style="height:20px;filter:brightness(0) invert(1);opacity:0.4;vertical-align:middle;margin-right:8px;" />
-      &copy; 2025 · QA Skill Check
+      <img src="logo.png" alt="Starapps Studio" style="height:18px;filter:brightness(0) invert(1);opacity:0.3;vertical-align:middle;margin-right:10px;" />
+      © 2025 · QA Skill Check
     </div>
   </footer>
 
 </div>
 
-<script src="questions.js"></script>
+<script src="config.js"></script>
+<script src="assessment.js"></script>
 <script>
-  const responses = JSON.parse(sessionStorage.getItem('qa_responses') || '{}');
-  const timings   = JSON.parse(sessionStorage.getItem('qa_timings')   || '{}');
+  var responses = JSON.parse(sessionStorage.getItem('qa_responses') || '{}');
+  var timings   = JSON.parse(sessionStorage.getItem('qa_timings')   || '{}');
 
-  // Stats
-  let totalMcq = 0;
-  let domainsCompleted = 0;
-  let timingValues = [];
+  var totalMcq = 0, domainsCompleted = 0, timingValues = [];
 
-  window.DOMAINS.forEach(d => {
-    const key = `domain_${d.id}`;
-    const resp = responses[key];
-    if (resp) {
-      domainsCompleted++;
-      totalMcq += resp.mcqScore || 0;
-    }
-    const t = timings[`${key}_secs`];
+  DOMAINS.forEach(function(d) {
+    var resp = responses['domain_' + d.id];
+    if (resp) { domainsCompleted++; totalMcq += resp.mcqScore || 0; }
+    var t = timings['domain_' + d.id + '_secs'];
     if (t) timingValues.push(t);
   });
 
-  const avgSecs = timingValues.length
-    ? Math.round(timingValues.reduce((a, b) => a + b, 0) / timingValues.length)
-    : 0;
-  const avgM = Math.floor(avgSecs / 60);
-  const avgS = avgSecs % 60;
+  var avgSecs = timingValues.length ? Math.round(timingValues.reduce(function(a,b){return a+b;}, 0) / timingValues.length) : 0;
+  document.getElementById('statMcq').textContent     = `${totalMcq}/21`;
+  document.getElementById('statDomains').textContent = `${domainsCompleted}/7`;
+  document.getElementById('statAvgTime').textContent = `${Math.floor(avgSecs/60)}m${String(avgSecs%60).padStart(2,'0')}s`;
 
-  document.getElementById('statMcq').textContent     = `${totalMcq} / 21`;
-  document.getElementById('statDomains').textContent = `${domainsCompleted} / 7`;
-  document.getElementById('statAvgTime').textContent = `${avgM}m ${String(avgS).padStart(2,'0')}s`;
-
-  // Per-domain breakdown
-  const breakdownEl = document.getElementById('scoreBreakdown');
-  window.DOMAINS.forEach(d => {
-    const key  = `domain_${d.id}`;
-    const resp = responses[key];
-    const row  = document.createElement('div');
+  var el = document.getElementById('scoreBreakdown');
+  DOMAINS.forEach(function(d) {
+    var resp  = responses['domain_' + d.id];
+    var row   = document.createElement('div');
     row.className = 'score-row';
-
-    const left = document.createElement('div');
-    left.innerHTML = `<div class="score-domain">${d.domain}</div>`;
-
-    const badges = document.createElement('div');
-    badges.className = 'score-badges';
-
-    if (resp) {
-      const score = resp.mcqScore ?? 0;
-      const mcqBadge = document.createElement('span');
-      mcqBadge.className = `mcq-score-badge${score === 3 ? ' perfect' : ''}`;
-      mcqBadge.textContent = `MCQ ${score}/3`;
-      badges.appendChild(mcqBadge);
-
-      const aiPending = document.createElement('span');
-      aiPending.className = 'ai-pending';
-      aiPending.textContent = '2 tasks · AI review pending';
-      badges.appendChild(aiPending);
-    } else {
-      const skip = document.createElement('span');
-      skip.className = 'ai-pending';
-      skip.textContent = 'Not attempted';
-      badges.appendChild(skip);
-    }
-
-    row.appendChild(left);
-    row.appendChild(badges);
-    breakdownEl.appendChild(row);
+    var score = (resp && resp.mcqScore != null) ? resp.mcqScore : null;
+    row.innerHTML =
+      '<div class="score-domain">' + d.domain + '</div>' +
+      '<div class="score-badges">' +
+        (score !== null
+          ? '<span class="mcq-score-badge' + (score === 3 ? ' perfect' : '') + '">' + score + '/3 MCQ</span><span class="ai-pending">tasks · AI review</span>'
+          : '<span class="ai-pending">Not attempted</span>') +
+      '</div>';
+    el.appendChild(row);
   });
 
-  // LinkedIn share
-  const shareText = encodeURIComponent('I just completed the QA Skill Check — 7 real-world domains, MCQs + open tasks covering API testing, automation, DB logs, RCA, complex systems, and AI in QA. Think you can beat my score?');
-  const shareUrl  = encodeURIComponent(window.location.origin + '/index.html');
-  document.getElementById('shareBtn').href = `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}&summary=${shareText}`;
+  var shareText = encodeURIComponent('I just completed the QA Skill Check by Starapps Studio — 7 real-world domains. Think you can beat my score?');
+  document.getElementById('shareBtn').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(window.location.origin + '/index.html') + '&summary=' + shareText;
 </script>
 
 </body>

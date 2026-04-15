@@ -3,142 +3,104 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QA Skill Check — Real-World QA Assessment</title>
-  <meta name="description" content="A 7-task, timed QA assessment covering API testing, automation, DB logs, RCA, and AI in QA. Built for real engineers." />
+  <title>QA Skill Check</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
 </head>
 <body>
 
 <div class="page">
 
-  <!-- Header -->
   <header>
     <div class="container">
       <nav class="site-header">
         <a class="logo" href="index.html">
           <img src="logo.png" alt="Starapps Studio" class="site-logo" />
         </a>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-3);letter-spacing:1px;text-transform:uppercase;">QA Skill Check</span>
       </nav>
     </div>
   </header>
 
-  <!-- Hero -->
-  <main>
+  <main style="padding: 56px 0 80px;">
     <div class="container">
-      <section class="hero">
-        <div class="hero-badge">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-          Live Assessment — 7 Tasks · 10 Min Each
-        </div>
-        <h1>Think you're a strong<br /><em>QA engineer?</em></h1>
-        <p>No multiple choice. No trick questions. Just 7 real-world problems we actually see in production — timed, one at a time.</p>
 
-        <div class="skills-grid">
-          <div class="skill-chip"><span class="dot"></span>API Testing</div>
-          <div class="skill-chip"><span class="dot"></span>Back-End Debug</div>
-          <div class="skill-chip"><span class="dot"></span>DB Log Reading</div>
-          <div class="skill-chip"><span class="dot"></span>Test Automation</div>
-          <div class="skill-chip"><span class="dot"></span>Root Cause Analysis</div>
-          <div class="skill-chip"><span class="dot"></span>Complex Systems</div>
-          <div class="skill-chip"><span class="dot"></span>AI in QA</div>
-        </div>
-      </section>
+      <div style="margin-bottom:32px;" class="animate-in">
+        <h1 style="font-family:var(--font-display);font-size:clamp(32px,5vw,48px);font-weight:800;letter-spacing:-2px;margin-bottom:10px;">
+          7 domains. 10 min each.<br /><span style="color:var(--lime);">Prove your QA skills.</span>
+        </h1>
+        <p style="color:var(--text-2);font-size:15px;">Fill in your details to begin.</p>
+      </div>
 
-      <hr class="divider" />
+      <div class="card animate-in delay-1">
+        <form id="registrationForm" novalidate>
+          <div class="form-grid">
 
-      <!-- Registration Form -->
-      <section class="form-section">
-        <h2>Before we start</h2>
-        <p class="subtitle">We collect this to segment results by experience level. Your email is only used if we want to follow up.</p>
-
-        <div class="card">
-          <form id="registrationForm" novalidate>
-            <div class="form-grid">
-
-              <div class="form-group">
-                <label for="fullName">Full Name <span class="required">*</span></label>
-                <input type="text" id="fullName" name="fullName" placeholder="Jane Smith" required autocomplete="name" />
-              </div>
-
-              <div class="form-group">
-                <label for="email">Email <span class="required">*</span></label>
-                <input type="email" id="email" name="email" placeholder="jane@company.com" required autocomplete="email" />
-              </div>
-
-              <div class="form-group">
-                <label for="experience">Years of QA Experience <span class="required">*</span></label>
-                <select id="experience" name="experience" required>
-                  <option value="" disabled selected>Select range</option>
-                  <option value="0-1">Less than 1 year</option>
-                  <option value="1-3">1 – 3 years</option>
-                  <option value="3-5">3 – 5 years</option>
-                  <option value="5-10">5 – 10 years</option>
-                  <option value="10+">10+ years</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="role">Current Role <span class="required">*</span></label>
-                <select id="role" name="role" required>
-                  <option value="" disabled selected>Select your role</option>
-                  <option value="manual-qa">Manual QA Engineer</option>
-                  <option value="sdet">SDET / Automation Engineer</option>
-                  <option value="qa-lead">QA Lead / Manager</option>
-                  <option value="qa-analyst">QA Analyst</option>
-                  <option value="devops-qa">DevOps / Platform QA</option>
-                  <option value="freelance">Freelance QA</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="domain">Primary Domain <span class="required">*</span></label>
-                <select id="domain" name="domain" required>
-                  <option value="" disabled selected>Select domain</option>
-                  <option value="web">Web Applications</option>
-                  <option value="mobile">Mobile (iOS / Android)</option>
-                  <option value="api">API / Microservices</option>
-                  <option value="backend">Back-End / Data</option>
-                  <option value="ai-ml">AI / ML Systems</option>
-                  <option value="embedded">Embedded / Hardware</option>
-                  <option value="mixed">Mixed / Full-Stack</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="linkedin">LinkedIn Profile <span style="color:var(--text-dim);font-weight:400;">(optional)</span></label>
-                <input type="text" id="linkedin" name="linkedin" placeholder="linkedin.com/in/yourhandle" autocomplete="off" />
-              </div>
-
+            <div class="form-group">
+              <label for="fullName">Full Name <span class="required">*</span></label>
+              <input type="text" id="fullName" name="fullName" placeholder="Jane Smith" required autocomplete="name" />
             </div>
 
-            <hr class="divider" />
-
-            <div class="notice notice-warning">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              <div><strong>Once you begin, each task locks after 10 minutes</strong> — even if left blank. You cannot revisit a submitted task. Make sure you have an uninterrupted hour available.</div>
+            <div class="form-group">
+              <label for="email">Email <span class="required">*</span></label>
+              <input type="email" id="email" name="email" placeholder="jane@company.com" required autocomplete="email" />
             </div>
 
-            <div id="formError" class="notice notice-danger" style="display:none;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-              <span id="formErrorMsg">Please fill in all required fields.</span>
+            <div class="form-group">
+              <label for="experience">Years of Experience <span class="required">*</span></label>
+              <select id="experience" name="experience" required>
+                <option value="" disabled selected>Select range</option>
+                <option value="0-1">Less than 1 year</option>
+                <option value="1-3">1 – 3 years</option>
+                <option value="3-5">3 – 5 years</option>
+                <option value="5-10">5 – 10 years</option>
+                <option value="10+">10+ years</option>
+              </select>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-lg btn-full" id="startBtn">
-              Start Assessment →
-            </button>
-          </form>
-        </div>
-      </section>
+            <div class="form-group">
+              <label for="role">Current Role <span class="required">*</span></label>
+              <select id="role" name="role" required>
+                <option value="" disabled selected>Select role</option>
+                <option value="manual-qa">Manual QA Engineer</option>
+                <option value="sdet">SDET / Automation Engineer</option>
+                <option value="qa-lead">QA Lead / Manager</option>
+                <option value="qa-analyst">QA Analyst</option>
+                <option value="devops-qa">DevOps / Platform QA</option>
+                <option value="freelance">Freelance QA</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
 
-      <!-- Footer note -->
-      <div class="card card-sm" style="text-align:center;margin-bottom:40px;">
-        <p style="font-size:14px;color:var(--text-muted);">
-          Your responses are stored securely. We do not share individual answers publicly.<br />
-          Results are reviewed by the Starapps QA team for hiring and research purposes.
-        </p>
+            <div class="form-group">
+              <label for="domain">Primary Domain <span class="required">*</span></label>
+              <select id="domain" name="domain" required>
+                <option value="" disabled selected>Select domain</option>
+                <option value="web">Web Applications</option>
+                <option value="mobile">Mobile (iOS / Android)</option>
+                <option value="api">API / Microservices</option>
+                <option value="backend">Back-End / Data</option>
+                <option value="ai-ml">AI / ML Systems</option>
+                <option value="embedded">Embedded / Hardware</option>
+                <option value="mixed">Mixed / Full-Stack</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="linkedin">LinkedIn <span style="color:var(--text-3);font-weight:400;">(optional)</span></label>
+              <input type="text" id="linkedin" name="linkedin" placeholder="linkedin.com/in/yourhandle" autocomplete="off" />
+            </div>
+
+          </div>
+
+          <div id="formError" class="notice notice-danger" style="display:none;margin-top:16px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <span id="formErrorMsg">Please fill in all required fields.</span>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg btn-full" id="startBtn" style="margin-top:20px;">
+            Start Assessment →
+          </button>
+        </form>
       </div>
 
     </div>
@@ -146,8 +108,8 @@
 
   <footer>
     <div class="container">
-      <img src="logo.png" alt="Starapps Studio" style="height:20px;filter:brightness(0) invert(1);opacity:0.4;vertical-align:middle;margin-right:8px;" />
-      &copy; 2025 · QA Skill Check
+      <img src="logo.png" alt="Starapps Studio" style="height:18px;filter:brightness(0) invert(1);opacity:0.3;vertical-align:middle;margin-right:10px;" />
+      © 2025 · QA Skill Check
     </div>
   </footer>
 
@@ -162,63 +124,44 @@
 
     fields.forEach(id => {
       const el = document.getElementById(id);
-      if (!el.value.trim()) {
-        el.style.borderColor = 'var(--danger)';
-        valid = false;
-      } else {
-        el.style.borderColor = '';
-      }
+      if (!el.value.trim()) { el.style.borderColor = 'var(--red)'; valid = false; }
+      else el.style.borderColor = '';
     });
 
-    // Basic email check
     const emailEl = document.getElementById('email');
     if (emailEl.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value)) {
-      emailEl.style.borderColor = 'var(--danger)';
-      valid = false;
+      emailEl.style.borderColor = 'var(--red)'; valid = false;
     }
 
-    const errorBox = document.getElementById('formError');
-    const errorMsg = document.getElementById('formErrorMsg');
-
     if (!valid) {
-      errorBox.style.display = 'flex';
-      errorMsg.textContent = 'Please fill in all required fields correctly.';
-      errorBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const err = document.getElementById('formError');
+      err.style.display = 'flex';
+      err.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       return;
     }
 
-    errorBox.style.display = 'none';
+    document.getElementById('formError').style.display = 'none';
 
-    // Save candidate info to sessionStorage
-    const candidate = {
-      fullName: document.getElementById('fullName').value.trim(),
-      email: document.getElementById('email').value.trim(),
+    sessionStorage.setItem('qa_candidate', JSON.stringify({
+      fullName:   document.getElementById('fullName').value.trim(),
+      email:      document.getElementById('email').value.trim(),
       experience: document.getElementById('experience').value,
-      role: document.getElementById('role').value,
-      domain: document.getElementById('domain').value,
-      linkedin: document.getElementById('linkedin').value.trim(),
-      startedAt: new Date().toISOString()
-    };
-
-    sessionStorage.setItem('qa_candidate', JSON.stringify(candidate));
+      role:       document.getElementById('role').value,
+      domain:     document.getElementById('domain').value,
+      linkedin:   document.getElementById('linkedin').value.trim(),
+      startedAt:  new Date().toISOString()
+    }));
     sessionStorage.setItem('qa_responses', JSON.stringify({}));
-    sessionStorage.setItem('qa_timings', JSON.stringify({}));
+    sessionStorage.setItem('qa_timings',   JSON.stringify({}));
 
-    // Show loading state
     const btn = document.getElementById('startBtn');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Loading...';
-
-    setTimeout(() => {
-      window.location.href = 'instructions.html';
-    }, 600);
+    setTimeout(() => { window.location.href = 'instructions.html'; }, 400);
   });
 
-  // Clear border on input
-  ['fullName', 'email', 'experience', 'role', 'domain'].forEach(id => {
-    document.getElementById(id).addEventListener('input', function () {
-      this.style.borderColor = '';
-    });
+  ['fullName','email','experience','role','domain'].forEach(id => {
+    document.getElementById(id).addEventListener('input', function () { this.style.borderColor = ''; });
   });
 </script>
 

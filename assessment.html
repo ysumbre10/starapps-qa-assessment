@@ -5,26 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Assessment — QA Skill Check</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
 </head>
 <body>
 
 <div class="page">
 
-  <!-- Header -->
   <header>
     <div class="container">
       <nav class="site-header">
         <a class="logo" href="index.html">
           <img src="logo.png" alt="Starapps Studio" class="site-logo" />
         </a>
-        <span id="headerCandidate" style="font-size:13px;color:var(--text-muted);"></span>
+        <span id="headerCandidate" style="font-family:var(--font-mono);font-size:11px;color:var(--text-3);"></span>
       </nav>
     </div>
   </header>
 
-  <!-- Sticky progress bar -->
+  <!-- Sticky progress -->
   <div class="progress-bar-wrap">
     <div class="container">
       <div class="progress-info">
@@ -37,93 +34,82 @@
     </div>
   </div>
 
-  <main style="padding:28px 0 64px;">
+  <main style="padding:24px 0 64px;">
     <div class="container">
 
-      <!-- Timer row -->
+      <!-- Timer -->
       <div class="timer-wrap">
         <div style="text-align:center;">
           <div class="timer-label">Time Remaining</div>
           <div class="timer-display" id="timerDisplay">10:00</div>
         </div>
         <div class="timer-ring">
-          <svg viewBox="0 0 56 56" width="56" height="56">
-            <circle class="timer-ring-bg" cx="28" cy="28" r="23"/>
-            <circle class="timer-ring-progress" id="timerRing" cx="28" cy="28" r="23"
-              style="stroke-dasharray:144.51;stroke-dashoffset:0;"/>
+          <svg viewBox="0 0 60 60" width="60" height="60">
+            <circle class="timer-ring-bg" cx="30" cy="30" r="26"/>
+            <circle class="timer-ring-progress" id="timerRing" cx="30" cy="30" r="26"/>
           </svg>
         </div>
         <div style="text-align:center;">
           <div class="timer-label">Auto-submits at</div>
-          <div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--text-muted);" id="autoSubmitAt">—</div>
+          <div id="autoSubmitAt" style="font-family:var(--font-mono);font-size:17px;font-weight:700;color:var(--text-2);">—</div>
         </div>
       </div>
 
-      <!-- Auto-submit warning -->
       <div id="autosubmitNotice" class="autosubmit-notice" style="display:none;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Under 2 minutes remaining — everything will auto-submit when the timer ends.
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Under 2 minutes — auto-submitting when timer hits zero.
       </div>
 
       <!-- Assessment card -->
       <div id="assessmentCard">
-
-        <!-- Domain header -->
-        <div style="margin-bottom:24px;">
+        <div style="margin-bottom:20px;">
           <div class="task-domain-badge" id="domainBadge">Domain</div>
-          <h1 id="domainTitle" style="font-size:26px;font-weight:700;letter-spacing:-0.5px;margin-top:8px;"></h1>
+          <h1 id="domainTitle" style="font-family:var(--font-display);font-size:24px;font-weight:800;letter-spacing:-0.5px;margin-top:8px;"></h1>
         </div>
 
-        <!-- ── MCQ Section ── -->
+        <!-- MCQ section -->
         <div class="section-header">
           <div class="section-icon mcq-icon">MCQ</div>
           <div>
-            <div class="section-title">Multiple Choice Questions</div>
-            <div class="section-sub">Select the best answer for each question. Auto-graded.</div>
+            <div class="section-title">Multiple Choice — 3 Questions</div>
+            <div class="section-sub">Pick the single best answer. Auto-graded.</div>
           </div>
         </div>
-
         <div id="mcqContainer"></div>
 
-        <!-- ── Tasks Section ── -->
-        <div class="section-header" style="margin-top:36px;">
+        <!-- Tasks section -->
+        <div class="section-header" style="margin-top:28px;">
           <div class="section-icon task-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           </div>
           <div>
-            <div class="section-title">Open Tasks</div>
-            <div class="section-sub">Scenario-based. Write your answers in the text areas below. Evaluated by AI.</div>
+            <div class="section-title">Open Tasks — 2 Scenarios</div>
+            <div class="section-sub">Write your answer in the text area. Evaluated by AI.</div>
           </div>
         </div>
-
         <div id="taskContainer"></div>
 
-        <!-- Submit -->
-        <div style="margin-top:32px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-          <button class="btn btn-primary btn-lg" id="submitBtn" style="flex:1;min-width:220px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-top:24px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-lg" id="submitBtn" style="flex:1;min-width:200px;">
             Submit &amp; Next Domain →
           </button>
-          <div style="font-size:13px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            Answers saved on submit
-          </div>
+          <div style="font-size:12px;color:var(--text-3);font-family:var(--font-mono);">Saved on submit</div>
         </div>
-
-      </div><!-- /assessmentCard -->
+      </div>
 
     </div>
   </main>
 
   <footer>
     <div class="container">
-      <img src="logo.png" alt="Starapps Studio" style="height:20px;filter:brightness(0) invert(1);opacity:0.4;vertical-align:middle;margin-right:8px;" />
-      &copy; 2025 · QA Skill Check
+      <img src="logo.png" alt="Starapps Studio" style="height:18px;filter:brightness(0) invert(1);opacity:0.3;vertical-align:middle;margin-right:10px;" />
+      © 2025 · QA Skill Check
     </div>
   </footer>
 
 </div>
 
-<script src="questions.js"></script>
-<script src="app.js"></script>
+<script src="config.js"></script>
+<script src="assessment.js"></script>
 </body>
 </html>
