@@ -74,28 +74,12 @@ body {
   text-decoration: none;
 }
 
-.logo-mark {
-  width: 36px;
-  height: 36px;
-  background: var(--accent);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 16px;
-  color: #fff;
-  letter-spacing: -0.5px;
-}
-
-.logo-text {
-  font-weight: 600;
-  font-size: 16px;
-  color: var(--text);
-}
-
-.logo-text span {
-  color: var(--accent);
+.site-logo {
+  height: 32px;
+  width: auto;
+  display: block;
+  /* Invert black logo to white on dark background */
+  filter: brightness(0) invert(1);
 }
 
 /* ── Hero ── */
