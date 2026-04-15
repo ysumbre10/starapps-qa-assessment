@@ -719,6 +719,19 @@
 
     document.getElementById('headerCandidate').textContent = _candidate.fullName || '';
     renderDomain(_idx);
+
+    if ('IntersectionObserver' in window) {
+      var _timerObs = new IntersectionObserver(function (entries) {
+        var strip = document.getElementById('stickyTimerStrip');
+        if (!strip) return;
+        strip.classList.toggle('show', !entries[0].isIntersecting);
+      }, {
+        rootMargin: '-110px 0px 0px 0px',
+        threshold: 0
+      });
+      var _timerEl = document.querySelector('.timer-wrap');
+      if (_timerEl) _timerObs.observe(_timerEl);
+    }
   });
 
   /* Warn before leaving mid-assessment */
@@ -744,6 +757,10 @@
     /* Header */
     document.getElementById('domainBadge').textContent = domain.domain;
     document.getElementById('domainTitle').textContent = domain.domain;
+
+    /* Sticky strip domain label */
+    var _sd = document.getElementById('stickyDomain');
+    if (_sd) _sd.textContent = domain.domain;
 
     /* MCQs */
     var mcqEl = document.getElementById('mcqContainer');
@@ -949,6 +966,15 @@
     } else if (rem <= 120) {
       el.classList.add('warning');
       ring.classList.add('warning');
+    }
+
+    /* Mirror to sticky timer strip */
+    var sEl = document.getElementById('stickyTimerDisplay');
+    if (sEl) {
+      sEl.textContent = pad(m) + ':' + pad(s);
+      sEl.classList.remove('warning', 'danger');
+      if (rem <= 30)       sEl.classList.add('danger');
+      else if (rem <= 120) sEl.classList.add('warning');
     }
   }
 

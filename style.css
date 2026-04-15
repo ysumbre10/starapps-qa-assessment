@@ -379,6 +379,75 @@ textarea {
 .timer-ring-progress.warning { stroke: var(--amber); }
 .timer-ring-progress.danger  { stroke: var(--red); }
 
+/* ── Sticky timer strip ──────────────────────────── */
+/* Slides in below the progress bar once the main timer scrolls out of view */
+.sticky-timer-strip {
+  position: sticky;
+  top: 99px; /* header 55px + progress bar ~44px */
+  z-index: 90;
+  background: rgba(9,9,11,0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.22s ease;
+}
+
+.sticky-timer-strip.show {
+  max-height: 46px;
+}
+
+.sticky-timer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 0;
+}
+
+.sticky-domain-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 55%;
+}
+
+.sticky-timer-right {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.sticky-timer-display {
+  font-family: var(--font-mono);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 1.5px;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s;
+}
+
+.sticky-timer-display.warning { color: var(--amber); }
+.sticky-timer-display.danger  {
+  color: var(--red);
+  animation: timer-pulse 1s ease-in-out infinite;
+}
+
+.sticky-timer-unit {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
 /* ── Domain badge ────────────────────────────────── */
 .task-domain-badge {
   display: inline-flex;
