@@ -17,6 +17,12 @@
   var SHEETS_ENDPOINT  = _cfg.sheetsEndpoint  || '';
   var AI_EVAL_ENDPOINT = _cfg.aiEvalEndpoint  || '';
 
+  /* ── Freeze timing primitives before any user code can spoof them
+     Captures Date.now at IIFE init — console overrides of Date.now
+     after this point have zero effect on timer or time-used tracking. */
+  var _Date = Date;
+  var _now  = _Date.now.bind(_Date);
+
   /* ─────────────────────────────────────────────────────────────
      QUESTIONS — correct answers removed from here, stored encoded
      in _K below. Options labels match display only.
@@ -420,16 +426,19 @@
   var TOTAL_SECS = 600;
   var CIRC       = 2 * Math.PI * 26;
 
-  var _idx       = 0;
-  var _deadline  = 0;
-  var _timer     = null;
+  var _idx         = 0;
+  var _deadline    = 0;
+  var _timer       = null;
+  var _watchdog    = null;   /* recursive timeout — survives clearInterval bruteforce */
   var _domainStart = 0;
-  var _warnShown = false;
-  var _sel       = [];
-  var _candidate = null;
-  var _responses = {};
-  var _timings   = {};
-  var _done      = false;
+  var _warnShown   = false;
+  var _sel         = [];
+  var _candidate   = null;
+  var _responses   = {};
+  var _timings     = {};
+  var _done        = false;
+  var _tampered    = false;  /* sessionStorage tampering detected on load             */
+  var _tabSwitches = 0;      /* times candidate hid / left the tab                   */
 
   /* ── Boot ──────────────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', function () {
@@ -443,7 +452,26 @@
     _timings    = JSON.parse(sessionStorage.getItem('qa_timings')   || '{}');
     _idx        = parseInt(sessionStorage.getItem('qa_current_task') || '0', 10);
 
-    /* Domain-lock: if already completed, cannot re-enter */
+    /* ── Submitted-lock: prevent retaking after full submission ───
+       Even if qa_current_task is manually reset to 0 in DevTools,
+       the signed submitted flag redirects them back to thankyou.   */
+    var _subFlag = sessionStorage.getItem('qa_submitted');
+    var _subSig  = sessionStorage.getItem('qa_submitted_sig');
+    if (_subFlag === '1' && _subSig === _sig({ s: 1, e: (_candidate && _candidate.email) || '' })) {
+      window.location.href = 'thankyou.html';
+      return;
+    }
+
+    /* ── Signature re-verification: detect sessionStorage tampering
+       If qa_responses was edited between domains the stored signature
+       won't match — mark as tampered so it's flagged in submission.  */
+    var _prevSig = sessionStorage.getItem('qa_sig');
+    if (_prevSig && Object.keys(_responses).length > 0) {
+      var _expectedSig = _sig({ r: _responses, t: _timings, e: (_candidate && _candidate.email) || '' });
+      if (_prevSig !== _expectedSig) _tampered = true;
+    }
+
+    /* ── Domain-lock: completed assessment cannot be re-entered ─── */
     if (_idx >= _D.length) {
       _done = true;
       window.location.href = 'thankyou.html';
@@ -457,6 +485,11 @@
   /* Warn before leaving mid-assessment */
   window.addEventListener('beforeunload', function (e) {
     if (!_done) { e.preventDefault(); e.returnValue = ''; }
+  });
+
+  /* Track tab switches — signals candidate left to look up answers */
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && !_done) _tabSwitches++;
   });
 
   /* ── Render domain ─────────────────────────────────────────── */
@@ -569,7 +602,7 @@
     document.getElementById('submitBtn').onclick = function () { submitDomain(false); };
 
     /* Auto-submit time label */
-    var endTime = new Date(Date.now() + TOTAL_SECS * 1000);
+    var endTime = new Date(_now() + TOTAL_SECS * 1000);
     document.getElementById('autoSubmitAt').textContent =
       endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -577,17 +610,25 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  /* ── Timer (wall-clock deadline — immune to secondsLeft hacks) ─ */
+  /* ── Timer ─────────────────────────────────────────────────────
+     Wall-clock deadline — immune to secondsLeft manipulation.
+     _now() is captured at IIFE init so Date.now spoofing from
+     the console has no effect.
+     Watchdog uses recursive setTimeout (not setInterval) so its
+     ID changes every 3 s — brute-force clearInterval(1..9999)
+     cannot reliably kill it.                                      */
   function startTimer() {
     clearInterval(_timer);
+    clearTimeout(_watchdog);
     _warnShown   = false;
-    _domainStart = Date.now();
-    _deadline    = Date.now() + TOTAL_SECS * 1000;
+    _domainStart = _now();
+    _deadline    = _now() + TOTAL_SECS * 1000;
 
     updateTimer(TOTAL_SECS);
 
+    /* Display timer — updates the UI every 500 ms */
     _timer = setInterval(function () {
-      var rem = Math.max(0, Math.round((_deadline - Date.now()) / 1000));
+      var rem = Math.max(0, Math.round((_deadline - _now()) / 1000));
       updateTimer(rem);
 
       if (rem <= 120 && !_warnShown) {
@@ -600,6 +641,16 @@
         submitDomain(true);
       }
     }, 500);
+
+    /* Watchdog — force-submits even if display timer is killed */
+    (function watchdog() {
+      _watchdog = setTimeout(function () {
+        if (_done) return;
+        var rem = Math.round((_deadline - _now()) / 1000);
+        if (rem <= 0) { submitDomain(true); return; }
+        watchdog(); /* reschedule — new ID each time */
+      }, 3000);
+    }());
   }
 
   function updateTimer(rem) {
@@ -630,9 +681,10 @@
   /* ── Submit ────────────────────────────────────────────────── */
   function submitDomain(isAuto) {
     clearInterval(_timer);
+    clearTimeout(_watchdog);
 
     var domain   = _D[_idx];
-    var timeUsed = Math.round((Date.now() - _domainStart) / 1000);
+    var timeUsed = Math.round((_now() - _domainStart) / 1000);
 
     var btn = document.getElementById('submitBtn');
     btn.disabled  = true;
@@ -653,8 +705,8 @@
       return el ? el.value.trim() : '';
     });
 
-    /* Minimum time flag — submitted in under 20s is suspicious */
-    var suspicious = timeUsed < 20;
+    /* Speed-run flag — under 90 s for 3 MCQs + 2 tasks is suspicious */
+    var suspicious = timeUsed < 90;
 
     var key = 'domain_' + domain.id;
     _responses[key] = {
@@ -673,10 +725,17 @@
     var sigPayload = { r: _responses, t: _timings, e: (_candidate && _candidate.email) || '' };
     sessionStorage.setItem('qa_sig', _sig(sigPayload));
 
-    /* Last domain → submit everything, then go to thank-you */
+    /* Last domain → lock submission, send everything, redirect */
     if (_idx >= _D.length - 1) {
       _done = true;
       sessionStorage.setItem('qa_current_task', String(_D.length));
+
+      /* Submitted-lock — tamper-evident flag prevents retaking
+         even if qa_current_task is reset to 0 in DevTools      */
+      sessionStorage.setItem('qa_submitted',     '1');
+      sessionStorage.setItem('qa_submitted_sig',
+        _sig({ s: 1, e: (_candidate && _candidate.email) || '' }));
+
       _submitAll().then(function () {
         window.location.href = 'thankyou.html';
       }).catch(function () {
@@ -735,7 +794,9 @@
       domain:        _candidate.domain,
       linkedin:      _candidate.linkedin || '',
       totalMcqScore: 0,
-      totalDomains:  _D.length
+      totalDomains:  _D.length,
+      tampered:      _tampered,      /* sessionStorage edited between sessions */
+      tabSwitches:   _tabSwitches    /* times candidate left/hid the tab       */
     };
 
     var totalMcq = 0;
