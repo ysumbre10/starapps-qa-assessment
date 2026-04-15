@@ -92,6 +92,21 @@
     window.location.href = 'index.html';
   }
 
+  /* ── Integrity warning ── */
+  try {
+    var integrity = JSON.parse(sessionStorage.getItem('qa_integrity') || '{}');
+    if (integrity.tampered || integrity.tabSwitches >= 3) {
+      var warn = document.createElement('div');
+      warn.style.cssText = 'background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:14px;color:#991b1b;';
+      var msgs = [];
+      if (integrity.tampered)           msgs.push('Session data was modified during the assessment.');
+      if (integrity.tabSwitches >= 3)   msgs.push('Tab switched ' + integrity.tabSwitches + ' times during the assessment.');
+      warn.innerHTML = '<strong>Note:</strong> ' + msgs.join(' ') + ' These flags have been included in your submission.';
+      var hero = document.querySelector('.thankyou-hero');
+      if (hero) hero.after(warn);
+    }
+  } catch (e) {}
+
   /* ── Marks scheme ── */
   var MCQ_MARKS_PER_Q = 2;   // per correct MCQ answer
   var TASK_MARKS_MAX  = 10;  // scored 0-10 per task by our team

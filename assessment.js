@@ -849,7 +849,12 @@
 
   /* Track tab switches - signals candidate left to look up answers */
   document.addEventListener('visibilitychange', function () {
-    if (document.hidden && !_done) _tabSwitches++;
+    if (document.hidden && !_done) {
+      _tabSwitches++;
+    } else if (!document.hidden && _tabSwitches >= 3) {
+      /* Warn on return after 3+ switches */
+      showFlash('\u26a0\ufe0f Multiple tab switches detected. This is noted in your submission.');
+    }
   });
 
   /* ── Render domain ─────────────────────────────────────────── */
@@ -988,6 +993,14 @@
          c) Saved deadline already passed → time expired while away,
             auto-submit immediately.                                    */
     var _savedDeadline = parseInt(sessionStorage.getItem('qa_domain_deadline') || '0', 10);
+    var _savedStart    = parseInt(sessionStorage.getItem('qa_domain_start')    || '0', 10);
+
+    /* Security: cap any resumed deadline to original domain start + TOTAL_SECS + 5s grace.
+       Prevents DevTools attack: sessionStorage.setItem('qa_domain_deadline', 9999999999999) */
+    if (_savedDeadline > 0 && _savedStart > 0) {
+      var _maxDeadline = _savedStart + (TOTAL_SECS + 5) * 1000;
+      if (_savedDeadline > _maxDeadline) _savedDeadline = _maxDeadline;
+    }
 
     if (_savedDeadline > 0 && _savedDeadline <= _now()) {
       /* Case (c): expired while away - submit with whatever was entered */
@@ -1005,7 +1018,13 @@
     if (_splitAt) _splitAt.textContent = _autoTimeStr;
 
     startTimer(_savedDeadline > _now() ? _savedDeadline : 0);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    /* In split mode the left panel scrolls independently; in normal mode scroll the window */
+    if (document.body.classList.contains('split-mode')) {
+      var _card = document.getElementById('assessmentCard');
+      if (_card) _card.scrollTop = 0;
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   /* ── Timer ─────────────────────────────────────────────────────
@@ -1026,6 +1045,8 @@
       _deadline = resumeDeadline;
     } else {
       _deadline = _now() + TOTAL_SECS * 1000;
+      /* Store domain start timestamp so deadline extension exploit is capped on reload */
+      sessionStorage.setItem('qa_domain_start', String(_now()));
     }
 
     /* Persist so page reload / back-navigation can restore remaining time */
@@ -1109,8 +1130,9 @@
     clearInterval(_timer);
     clearTimeout(_watchdog);
 
-    /* Clear persisted deadline - next domain must get a fresh 10-min clock */
+    /* Clear persisted deadline + start - next domain must get a fresh 10-min clock */
     sessionStorage.removeItem('qa_domain_deadline');
+    sessionStorage.removeItem('qa_domain_start');
 
     var domain   = _D[_idx];
     var timeUsed = Math.round((_now() - _domainStart) / 1000);
@@ -1167,6 +1189,12 @@
       sessionStorage.setItem('qa_submitted',     '1');
       sessionStorage.setItem('qa_submitted_sig',
         _sig({ s: 1, e: (_candidate && _candidate.email) || '' }));
+
+      /* Persist integrity flags so thankyou.html can warn the candidate */
+      sessionStorage.setItem('qa_integrity', JSON.stringify({
+        tampered:    _tampered,
+        tabSwitches: _tabSwitches
+      }));
 
       _submitAll().then(function () {
         window.location.href = 'thankyou.html';
@@ -1350,10 +1378,24 @@
       }).catch(function (err) { console.error('AI evaluation failed:', err); });
     }
 
-    return Promise.all([sheetsP, evalP]);
+    /* Race against a 30-second timeout so the page never hangs on a dead network */
+    var timeoutP = new Promise(function (_, reject) {
+      setTimeout(function () { reject(new Error('submission timeout')); }, 30000);
+    });
+    return Promise.race([Promise.all([sheetsP, evalP]), timeoutP]);
   }
 
-  /* ── Expose domain list for thankyou.html (names only, no answers) */
-  window.DOMAINS = _D;
+  /* ── Expose domain list for thankyou.html (metadata only — no question text or eval prompts) */
+  window.DOMAINS = _D.map(function (d) {
+    return {
+      id:         d.id,
+      domain:     d.domain,
+      playground: !!d.playground,
+      mcqs:       new Array(d.mcqs.length),          /* preserve .length, strip question content */
+      tasks:      d.tasks.map(function (t) {
+        return { title: t.title };                   /* preserve title for display, strip evalPrompt */
+      })
+    };
+  });
 
 })();

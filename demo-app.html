@@ -350,7 +350,7 @@ function mockAPI(method, endpoint, data) {
 
       /* POST /api/contact */
       if (method === 'POST' && endpoint === '/api/contact') {
-        var stored = JSON.parse(localStorage.getItem('sl_contacts')||'[]');
+        var stored = JSON.parse(sessionStorage.getItem('sl_contacts')||'[]');
         var dup = stored.some(function(c){ return c.email === data.email; });
         var r;
         if (dup) {
@@ -358,7 +358,7 @@ function mockAPI(method, endpoint, data) {
           r = { status:200, body:{ success:false, error:'Email already registered in our system' } };
         } else {
           stored.push({ name:data.name, email:data.email, ts:Date.now() });
-          localStorage.setItem('sl_contacts', JSON.stringify(stored));
+          sessionStorage.setItem('sl_contacts', JSON.stringify(stored));
           r = { status:200, body:{ success:true, ticketId:'TKT-'+(Date.now()%9999), message:'Message received' } };
         }
         logAPI(method, endpoint, r.status, r.body);
@@ -593,9 +593,9 @@ function placeOrder() {
   mockAPI('POST', '/api/orders', payload).then(function(res) {
     if (res.status === 401) return; /* BUG-H4: silent fail */
     if (res.body.success) {
-      var orders = JSON.parse(localStorage.getItem('sl_orders')||'[]');
+      var orders = JSON.parse(sessionStorage.getItem('sl_orders')||'[]');
       orders.unshift({ orderId:res.body.orderId, items:payload.items, subtotal:sub, total:total, ts:new Date().toISOString() });
-      localStorage.setItem('sl_orders', JSON.stringify(orders));
+      sessionStorage.setItem('sl_orders', JSON.stringify(orders));
       cart = [];
       updatePill(); renderCart();
       toast('Order placed: ' + res.body.orderId);
@@ -608,7 +608,7 @@ function placeOrder() {
 function renderOrders() {
   var el = document.getElementById('orderList');
   if (!el) return;
-  var orders = JSON.parse(localStorage.getItem('sl_orders')||'[]');
+  var orders = JSON.parse(sessionStorage.getItem('sl_orders')||'[]');
   if (!orders.length) {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">No orders yet.</div></div>';
     return;
