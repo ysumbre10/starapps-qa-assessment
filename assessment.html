@@ -24,11 +24,11 @@
     </div>
   </header>
 
-  <!-- Progress bar (sticky) -->
+  <!-- Sticky progress bar -->
   <div class="progress-bar-wrap">
     <div class="container">
       <div class="progress-info">
-        <span class="progress-label" id="progressLabel">Task 1 of 7</span>
+        <span class="progress-label" id="progressLabel">Domain 1 of 7</span>
         <span class="progress-count" id="progressDomain"></span>
       </div>
       <div class="progress-track">
@@ -37,11 +37,10 @@
     </div>
   </div>
 
-  <!-- Main task area -->
-  <main style="padding:32px 0 64px;">
+  <main style="padding:28px 0 64px;">
     <div class="container">
 
-      <!-- Timer -->
+      <!-- Timer row -->
       <div class="timer-wrap">
         <div style="text-align:center;">
           <div class="timer-label">Time Remaining</div>
@@ -50,7 +49,8 @@
         <div class="timer-ring">
           <svg viewBox="0 0 56 56" width="56" height="56">
             <circle class="timer-ring-bg" cx="28" cy="28" r="23"/>
-            <circle class="timer-ring-progress" id="timerRing" cx="28" cy="28" r="23"/>
+            <circle class="timer-ring-progress" id="timerRing" cx="28" cy="28" r="23"
+              style="stroke-dasharray:144.51;stroke-dashoffset:0;"/>
           </svg>
         </div>
         <div style="text-align:center;">
@@ -59,47 +59,57 @@
         </div>
       </div>
 
+      <!-- Auto-submit warning -->
       <div id="autosubmitNotice" class="autosubmit-notice" style="display:none;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Under 2 minutes remaining — your answer will auto-submit when the timer ends.
+        Under 2 minutes remaining — everything will auto-submit when the timer ends.
       </div>
 
-      <!-- Task card -->
-      <div class="card" id="taskCard">
-        <div class="task-header">
-          <div class="task-domain-badge" id="taskDomain">Domain</div>
-          <h1 class="task-title" id="taskTitle">Loading task...</h1>
+      <!-- Assessment card -->
+      <div id="assessmentCard">
 
-          <div style="margin-bottom:16px;">
-            <h3 style="font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Scenario</h3>
-            <div class="scenario-block" id="taskScenario"></div>
-          </div>
+        <!-- Domain header -->
+        <div style="margin-bottom:24px;">
+          <div class="task-domain-badge" id="domainBadge">Domain</div>
+          <h1 id="domainTitle" style="font-size:26px;font-weight:700;letter-spacing:-0.5px;margin-top:8px;"></h1>
+        </div>
 
-          <div class="question-block">
-            <h3>Your Task</h3>
-            <div id="taskQuestion"></div>
+        <!-- ── MCQ Section ── -->
+        <div class="section-header">
+          <div class="section-icon mcq-icon">MCQ</div>
+          <div>
+            <div class="section-title">Multiple Choice Questions</div>
+            <div class="section-sub">Select the best answer for each question. Auto-graded.</div>
           </div>
         </div>
 
-        <span class="answer-label">Your Answer</span>
-        <textarea
-          class="answer-textarea"
-          id="answerBox"
-          placeholder="Type your answer here..."
-          spellcheck="true"
-        ></textarea>
-        <div class="char-count"><span id="charCount">0</span> characters</div>
+        <div id="mcqContainer"></div>
 
-        <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;">
-          <button class="btn btn-primary btn-lg" id="submitBtn" style="flex:1;min-width:200px;">
-            Submit &amp; Next Task →
+        <!-- ── Tasks Section ── -->
+        <div class="section-header" style="margin-top:36px;">
+          <div class="section-icon task-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <div>
+            <div class="section-title">Open Tasks</div>
+            <div class="section-sub">Scenario-based. Write your answers in the text areas below. Evaluated by AI.</div>
+          </div>
+        </div>
+
+        <div id="taskContainer"></div>
+
+        <!-- Submit -->
+        <div style="margin-top:32px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-lg" id="submitBtn" style="flex:1;min-width:220px;">
+            Submit &amp; Next Domain →
           </button>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            Saved on submit
+          <div style="font-size:13px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Answers saved on submit
           </div>
         </div>
-      </div>
+
+      </div><!-- /assessmentCard -->
 
     </div>
   </main>
@@ -113,6 +123,7 @@
 
 </div>
 
+<script src="questions.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

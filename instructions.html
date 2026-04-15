@@ -40,7 +40,7 @@
           </li>
           <li>
             <div class="rule-num">2</div>
-            <div class="rule-text"><strong>10 minutes per task.</strong> A visible countdown runs for each task. When it reaches zero, your answer is automatically submitted — even if blank.</div>
+            <div class="rule-text"><strong>10 minutes per domain.</strong> Each domain has 3 MCQs + 2 open tasks. One shared countdown covers all 5 items. When it reaches zero, everything is automatically submitted — even if incomplete.</div>
           </li>
           <li>
             <div class="rule-num">3</div>
@@ -67,8 +67,8 @@
 
       <!-- What's covered -->
       <div class="card" style="margin-bottom:24px;">
-        <h2 style="font-size:18px;font-weight:700;margin-bottom:8px;">What you'll be assessed on</h2>
-        <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;">Seven domains — one task each. No domain is repeated.</p>
+        <h2 style="font-size:18px;font-weight:700;margin-bottom:4px;">What you'll be assessed on</h2>
+        <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;">7 domains · 3 MCQs + 2 open tasks each · 10 minutes per domain</p>
         <div class="domain-list">
           <div class="domain-item"><span class="num">01</span> API Testing</div>
           <div class="domain-item"><span class="num">02</span> Back-End Debugging</div>
@@ -77,6 +77,29 @@
           <div class="domain-item"><span class="num">05</span> Root Cause Analysis</div>
           <div class="domain-item"><span class="num">06</span> Complex Systems</div>
           <div class="domain-item"><span class="num">07</span> AI in QA</div>
+        </div>
+      </div>
+
+      <!-- Format explainer -->
+      <div class="card" style="margin-bottom:24px;">
+        <h2 style="font-size:18px;font-weight:700;margin-bottom:14px;">Format per domain</h2>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            <div class="section-icon mcq-icon" style="width:32px;height:32px;font-size:10px;">MCQ</div>
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px;">3 Multiple Choice Questions</div>
+              <div style="font-size:13px;color:var(--text-muted);">Select one answer per question. Auto-graded instantly.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            <div class="section-icon task-icon" style="width:32px;height:32px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px;">2 Open Tasks</div>
+              <div style="font-size:13px;color:var(--text-muted);">Real-world scenarios. Write your answer in the text area. Evaluated by AI with a domain-specific rubric.</div>
+            </div>
+          </div>
         </div>
       </div>
 

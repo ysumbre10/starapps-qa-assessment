@@ -1,134 +1,210 @@
 /**
- * QA Skill Check — Assessment Engine
+ * QA Skill Check — Assessment Engine (v2)
  *
- * Responsibilities:
- *  - Load tasks from tasks.json
- *  - Render one task at a time
- *  - Run per-task 10-minute countdown
- *  - Auto-submit on timer expiry
- *  - Submit answers to Google Sheets via Apps Script Web App
- *  - Navigate to thank-you page when all tasks are done
+ * Format per domain: 3 MCQs + 2 open tasks, 10-minute timer for all 5 items.
+ * MCQs: auto-graded client-side.
+ * Tasks: submitted to Google Sheets + optionally evaluated via Claude API proxy.
  *
- * Google Sheets integration:
- *  Replace SHEETS_ENDPOINT below with your deployed Apps Script Web App URL.
+ * Setup:
+ *  1. Replace SHEETS_ENDPOINT with your deployed Google Apps Script Web App URL.
+ *  2. (Optional) Replace AI_EVAL_ENDPOINT with a serverless function URL that
+ *     proxies to the Claude API and returns { scores: [{score, feedback}, ...] }.
  */
 
-const SHEETS_ENDPOINT = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
-const TASK_TIME_LIMIT = 600; // 10 minutes in seconds
-const RING_CIRCUMFERENCE = 2 * Math.PI * 23; // r=23 → ~144.51
+// DOMAINS is defined in questions.js, loaded before this script in assessment.html
+// eslint-disable-next-line no-undef
+const DOMAINS = /** @type {any[]} */ (window.DOMAINS);
+
+const SHEETS_ENDPOINT  = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+const AI_EVAL_ENDPOINT = 'YOUR_AI_EVAL_ENDPOINT_HERE'; // optional
+
+const DOMAIN_TIME_LIMIT = 600; // 10 minutes per domain
+const RING_CIRCUMFERENCE = 2 * Math.PI * 23;
 
 // ── State ──────────────────────────────────────────────────────────────────
-let tasks = [];
-let currentIndex = 0;
+let currentDomainIndex = 0;
 let timerInterval = null;
-let secondsLeft = TASK_TIME_LIMIT;
-let taskStartTime = null;
+let secondsLeft = DOMAIN_TIME_LIMIT;
+let domainStartTime = null;
 let candidate = null;
-let responses = {};
-let timings = {};
+let allResponses = {};   // { domain_1: { mcqs: [0,2,1], tasks: ["...", "..."] }, ... }
+let allTimings  = {};    // { domain_1_secs: 342, ... }
+let mcqSelections = [];  // current domain's selected option indices
 
 // ── Boot ───────────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', async () => {
-  // Guard: must have candidate data
+window.addEventListener('DOMContentLoaded', () => {
   const raw = sessionStorage.getItem('qa_candidate');
-  if (!raw) {
-    window.location.href = 'index.html';
-    return;
-  }
+  if (!raw) { window.location.href = 'index.html'; return; }
 
   candidate = JSON.parse(raw);
-  responses = JSON.parse(sessionStorage.getItem('qa_responses') || '{}');
-  timings = JSON.parse(sessionStorage.getItem('qa_timings') || '{}');
-  currentIndex = parseInt(sessionStorage.getItem('qa_current_task') || '0', 10);
+  allResponses = JSON.parse(sessionStorage.getItem('qa_responses') || '{}');
+  allTimings   = JSON.parse(sessionStorage.getItem('qa_timings')   || '{}');
+  currentDomainIndex = parseInt(sessionStorage.getItem('qa_current_task') || '0', 10);
 
   document.getElementById('headerCandidate').textContent = candidate.fullName;
 
-  // Load tasks
-  try {
-    const res = await fetch('tasks.json');
-    tasks = await res.json();
-  } catch (err) {
-    console.error('Failed to load tasks.json', err);
-    alert('Failed to load assessment tasks. Please refresh the page.');
-    return;
-  }
-
-  // If all tasks already done, go to thank-you
-  if (currentIndex >= tasks.length) {
+  if (currentDomainIndex >= DOMAINS.length) {
     window.location.href = 'thankyou.html';
     return;
   }
 
-  renderTask(currentIndex);
+  renderDomain(currentDomainIndex);
 });
 
-// ── Render Task ────────────────────────────────────────────────────────────
-function renderTask(index) {
-  const task = tasks[index];
+// ── Render Domain ──────────────────────────────────────────────────────────
+function renderDomain(index) {
+  const domain = DOMAINS[index];
+  mcqSelections = new Array(domain.mcqs.length).fill(null);
 
-  // Update progress
-  const progress = (index / tasks.length) * 100;
-  document.getElementById('progressFill').style.width = progress + '%';
-  document.getElementById('progressLabel').textContent = `Task ${index + 1} of ${tasks.length}`;
-  document.getElementById('progressDomain').textContent = task.domain;
+  // Progress
+  const pct = (index / DOMAINS.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `Domain ${index + 1} of ${DOMAINS.length}`;
+  document.getElementById('progressDomain').textContent = domain.domain;
 
-  // Task content
-  document.getElementById('taskDomain').textContent = task.domain;
-  document.getElementById('taskTitle').textContent = task.title;
-  document.getElementById('taskScenario').textContent = task.scenario;
+  // Domain header
+  document.getElementById('domainBadge').textContent = domain.domain;
+  document.getElementById('domainTitle').textContent = domain.domain;
 
-  // Render question with line breaks preserved
-  const qEl = document.getElementById('taskQuestion');
-  qEl.innerHTML = task.question.split('\n').map(line => {
-    line = line.trim();
-    if (!line) return '';
-    return `<p style="margin-bottom:6px;color:var(--text-muted);font-size:14px;">${escapeHtml(line)}</p>`;
-  }).join('');
+  // ── Render MCQs ──
+  const mcqContainer = document.getElementById('mcqContainer');
+  mcqContainer.innerHTML = '';
 
-  // Answer box
-  const answerBox = document.getElementById('answerBox');
-  answerBox.value = '';
-  answerBox.placeholder = task.placeholder || 'Type your answer here...';
-  answerBox.focus();
+  domain.mcqs.forEach((mcq, qi) => {
+    const block = document.createElement('div');
+    block.className = 'mcq-block';
+    block.dataset.qi = qi;
 
-  document.getElementById('charCount').textContent = '0';
+    const qNum = document.createElement('div');
+    qNum.className = 'mcq-qnum';
+    qNum.textContent = `Q${qi + 1}`;
 
-  // Char counter
-  answerBox.oninput = function () {
-    document.getElementById('charCount').textContent = this.value.length.toLocaleString();
-  };
+    const qText = document.createElement('p');
+    qText.className = 'mcq-question';
+    qText.textContent = mcq.q;
 
-  // Set auto-submit time display
-  const endTime = new Date(Date.now() + TASK_TIME_LIMIT * 1000);
+    const options = document.createElement('div');
+    options.className = 'mcq-options';
+
+    mcq.options.forEach((opt, oi) => {
+      const label = document.createElement('label');
+      label.className = 'mcq-option';
+      label.dataset.qi = qi;
+      label.dataset.oi = oi;
+
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = `mcq_${qi}`;
+      radio.value = oi;
+      radio.addEventListener('change', () => {
+        mcqSelections[qi] = oi;
+        // Highlight selected
+        options.querySelectorAll('.mcq-option').forEach(l => l.classList.remove('selected'));
+        label.classList.add('selected');
+      });
+
+      const optText = document.createElement('span');
+      optText.textContent = opt;
+
+      const marker = document.createElement('span');
+      marker.className = 'mcq-marker';
+      marker.textContent = String.fromCharCode(65 + oi); // A B C D
+
+      label.appendChild(radio);
+      label.appendChild(marker);
+      label.appendChild(optText);
+      options.appendChild(label);
+    });
+
+    block.appendChild(qNum);
+    block.appendChild(qText);
+    block.appendChild(options);
+    mcqContainer.appendChild(block);
+  });
+
+  // ── Render Tasks ──
+  const taskContainer = document.getElementById('taskContainer');
+  taskContainer.innerHTML = '';
+
+  domain.tasks.forEach((task, ti) => {
+    const block = document.createElement('div');
+    block.className = 'task-block';
+
+    const header = document.createElement('div');
+    header.className = 'task-block-header';
+    header.innerHTML = `
+      <span class="task-block-num">Task ${ti + 1}</span>
+      <span class="task-block-title">${escapeHtml(task.title)}</span>
+    `;
+
+    const scenario = document.createElement('div');
+    scenario.className = 'scenario-block';
+    scenario.textContent = task.scenario;
+
+    const questionLabel = document.createElement('div');
+    questionLabel.className = 'task-question-label';
+    questionLabel.textContent = 'Your Task';
+
+    const questionText = document.createElement('div');
+    questionText.className = 'task-question-text';
+    questionText.textContent = task.question;
+
+    const answerLabel = document.createElement('span');
+    answerLabel.className = 'answer-label';
+    answerLabel.textContent = 'Your Answer';
+
+    const textarea = document.createElement('textarea');
+    textarea.className = 'answer-textarea';
+    textarea.id = `task_answer_${ti}`;
+    textarea.placeholder = task.placeholder || 'Type your answer here...';
+    textarea.spellcheck = true;
+
+    const charCount = document.createElement('div');
+    charCount.className = 'char-count';
+    charCount.id = `char_${ti}`;
+    charCount.textContent = '0 characters';
+
+    textarea.addEventListener('input', () => {
+      charCount.textContent = textarea.value.length.toLocaleString() + ' characters';
+    });
+
+    block.appendChild(header);
+    block.appendChild(scenario);
+    block.appendChild(questionLabel);
+    block.appendChild(questionText);
+    block.appendChild(answerLabel);
+    block.appendChild(textarea);
+    block.appendChild(charCount);
+    taskContainer.appendChild(block);
+  });
+
+  // Auto-submit time label
+  const endTime = new Date(Date.now() + DOMAIN_TIME_LIMIT * 1000);
   document.getElementById('autoSubmitAt').textContent = endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  // Start timer
-  startTimer(task.timeLimit || TASK_TIME_LIMIT);
+  // Wire submit button
+  document.getElementById('submitBtn').onclick = () => submitDomain(false);
 
-  // Submit button
-  document.getElementById('submitBtn').onclick = () => submitTask(false);
+  // Start timer
+  startTimer();
 }
 
 // ── Timer ──────────────────────────────────────────────────────────────────
-function startTimer(durationSecs) {
+function startTimer() {
   clearInterval(timerInterval);
-  secondsLeft = durationSecs;
-  taskStartTime = Date.now();
-
+  secondsLeft = DOMAIN_TIME_LIMIT;
+  domainStartTime = Date.now();
   updateTimerDisplay();
 
   timerInterval = setInterval(() => {
     secondsLeft--;
     updateTimerDisplay();
-
     if (secondsLeft === 120) {
-      // 2-minute warning
       document.getElementById('autosubmitNotice').style.display = 'flex';
     }
-
     if (secondsLeft <= 0) {
       clearInterval(timerInterval);
-      submitTask(true);
+      submitDomain(true);
     }
   }, 1000);
 }
@@ -138,70 +214,77 @@ function updateTimerDisplay() {
   const secs = secondsLeft % 60;
   const display = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
-  const el = document.getElementById('timerDisplay');
+  const el   = document.getElementById('timerDisplay');
   const ring = document.getElementById('timerRing');
-  const totalTime = tasks[currentIndex]?.timeLimit || TASK_TIME_LIMIT;
-  const fraction = secondsLeft / totalTime;
+  const fraction = secondsLeft / DOMAIN_TIME_LIMIT;
 
   el.textContent = display;
+  ring.style.strokeDashoffset = RING_CIRCUMFERENCE * (1 - fraction);
 
-  // Ring progress
-  const offset = RING_CIRCUMFERENCE * (1 - fraction);
-  ring.style.strokeDashoffset = offset;
-
-  // Color states
   el.classList.remove('warning', 'danger');
   ring.classList.remove('warning', 'danger');
 
-  if (secondsLeft <= 60) {
-    el.classList.add('danger');
-    ring.classList.add('danger');
-  } else if (secondsLeft <= 120) {
-    el.classList.add('warning');
-    ring.classList.add('warning');
-  }
+  if (secondsLeft <= 60)       { el.classList.add('danger');  ring.classList.add('danger');  }
+  else if (secondsLeft <= 120) { el.classList.add('warning'); ring.classList.add('warning'); }
 }
 
 // ── Submit ─────────────────────────────────────────────────────────────────
-async function submitTask(isAutoSubmit) {
+async function submitDomain(isAutoSubmit) {
   clearInterval(timerInterval);
 
-  const task = tasks[currentIndex];
-  const answer = document.getElementById('answerBox').value.trim();
-  const timeUsed = Math.round((Date.now() - taskStartTime) / 1000);
+  const domain = DOMAINS[currentDomainIndex];
+  const timeUsed = Math.round((Date.now() - domainStartTime) / 1000);
 
-  // Disable submit button
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Saving...';
 
-  if (isAutoSubmit) {
-    document.getElementById('autosubmitNotice').style.display = 'none';
-    showAutoSubmitFlash();
-  }
+  if (isAutoSubmit) showAutoSubmitFlash();
 
-  // Record
-  responses[`task_${task.id}`] = answer || '(no answer — auto-submitted)';
-  timings[`task_${task.id}_secs`] = timeUsed;
+  // Collect MCQ answers
+  const mcqAnswers = mcqSelections.map((sel, qi) => ({
+    selected: sel,
+    correct: domain.mcqs[qi].correct,
+    isCorrect: sel === domain.mcqs[qi].correct
+  }));
 
-  sessionStorage.setItem('qa_responses', JSON.stringify(responses));
-  sessionStorage.setItem('qa_timings', JSON.stringify(timings));
+  // Collect task answers
+  const taskAnswers = domain.tasks.map((_, ti) => {
+    const el = document.getElementById(`task_answer_${ti}`);
+    return el ? el.value.trim() : '';
+  });
 
-  // If last task, submit everything to Sheets and go to thank-you
-  if (currentIndex >= tasks.length - 1) {
+  // Score MCQs
+  const mcqScore = mcqAnswers.filter(a => a.isCorrect).length;
+
+  // Store
+  const key = `domain_${domain.id}`;
+  allResponses[key] = {
+    domainName: domain.domain,
+    mcqAnswers,
+    mcqScore,
+    taskAnswers
+  };
+  allTimings[`${key}_secs`] = timeUsed;
+
+  sessionStorage.setItem('qa_responses', JSON.stringify(allResponses));
+  sessionStorage.setItem('qa_timings',   JSON.stringify(allTimings));
+
+  // Last domain → submit everything and go to thank-you
+  if (currentDomainIndex >= DOMAINS.length - 1) {
     await submitAllToSheets();
     window.location.href = 'thankyou.html';
     return;
   }
 
   // Advance
-  currentIndex++;
-  sessionStorage.setItem('qa_current_task', String(currentIndex));
+  currentDomainIndex++;
+  sessionStorage.setItem('qa_current_task', String(currentDomainIndex));
 
-  // Brief transition
-  const card = document.getElementById('taskCard');
-  card.style.opacity = '0.4';
-  card.style.transform = 'translateY(8px)';
+  // Transition
+  const card = document.getElementById('assessmentCard');
+  card.style.opacity = '0';
+  card.style.transform = 'translateY(10px)';
   card.style.transition = 'opacity 0.25s, transform 0.25s';
 
   setTimeout(() => {
@@ -209,36 +292,82 @@ async function submitTask(isAutoSubmit) {
     card.style.opacity = '1';
     card.style.transform = 'translateY(0)';
     btn.disabled = false;
-    btn.innerHTML = 'Submit &amp; Next Task →';
-    renderTask(currentIndex);
+    btn.innerHTML = 'Submit &amp; Next Domain →';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    renderDomain(currentDomainIndex);
   }, 320);
 }
 
-// ── Google Sheets Submission ───────────────────────────────────────────────
+// ── Google Sheets + AI Eval Submission ─────────────────────────────────────
 async function submitAllToSheets() {
-  if (SHEETS_ENDPOINT === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-    console.warn('Google Sheets endpoint not configured. Skipping remote save.');
-    return;
-  }
-
-  const payload = {
+  // Flatten all responses for the sheet
+  const flat = {
     timestamp: new Date().toISOString(),
-    ...candidate,
-    ...responses,
-    ...timings,
-    completionPct: Math.round((Object.keys(responses).length / tasks.length) * 100)
+    fullName:    candidate.fullName,
+    email:       candidate.email,
+    experience:  candidate.experience,
+    role:        candidate.role,
+    domain:      candidate.domain,
+    linkedin:    candidate.linkedin || '',
+    totalMcqScore: 0,
+    totalDomains: DOMAINS.length
   };
 
-  try {
-    await fetch(SHEETS_ENDPOINT, {
-      method: 'POST',
-      mode: 'no-cors', // Apps Script requires no-cors
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-  } catch (err) {
-    console.error('Failed to submit to Google Sheets:', err);
-    // Don't block the user — still navigate to thank-you
+  let totalMcq = 0;
+
+  DOMAINS.forEach(d => {
+    const key = `domain_${d.id}`;
+    const resp = allResponses[key] || {};
+    flat[`${key}_mcq_score`]   = resp.mcqScore ?? 0;
+    flat[`${key}_mcq_answers`] = JSON.stringify(resp.mcqAnswers ?? []);
+    flat[`${key}_task_1`]      = resp.taskAnswers?.[0] ?? '';
+    flat[`${key}_task_2`]      = resp.taskAnswers?.[1] ?? '';
+    flat[`${key}_time_secs`]   = allTimings[`${key}_secs`] ?? 0;
+    totalMcq += resp.mcqScore ?? 0;
+  });
+
+  flat.totalMcqScore = totalMcq;
+
+  // Submit to Sheets
+  if (SHEETS_ENDPOINT !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    try {
+      await fetch(SHEETS_ENDPOINT, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(flat)
+      });
+    } catch (err) {
+      console.error('Sheets submission failed:', err);
+    }
+  }
+
+  // Optional: AI task evaluation
+  if (AI_EVAL_ENDPOINT !== 'YOUR_AI_EVAL_ENDPOINT_HERE') {
+    const evalPayload = DOMAINS.map(d => {
+      const key = `domain_${d.id}`;
+      const resp = allResponses[key] || {};
+      return d.tasks.map((task, ti) => ({
+        domain: d.domain,
+        taskTitle: task.title,
+        evalPrompt: task.evalPrompt,
+        answer: resp.taskAnswers?.[ti] ?? ''
+      }));
+    }).flat();
+
+    try {
+      const evalRes = await fetch(AI_EVAL_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidateEmail: candidate.email, tasks: evalPayload })
+      });
+      if (evalRes.ok) {
+        const evalData = await evalRes.json();
+        sessionStorage.setItem('qa_ai_scores', JSON.stringify(evalData));
+      }
+    } catch (err) {
+      console.error('AI evaluation failed:', err);
+    }
   }
 }
 
@@ -254,18 +383,17 @@ function escapeHtml(str) {
 function showAutoSubmitFlash() {
   const banner = document.createElement('div');
   banner.className = 'notice notice-danger';
-  banner.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:999;max-width:420px;width:90%;animation:fadeIn 0.3s ease;';
+  banner.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:999;max-width:440px;width:90%;';
   banner.innerHTML = `
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-    <span>Time's up — task auto-submitted.</span>
+    <span>Time's up — domain auto-submitted.</span>
   `;
   document.body.appendChild(banner);
-  setTimeout(() => banner.remove(), 3000);
+  setTimeout(() => banner.remove(), 3500);
 }
 
-// Prevent accidental navigation away mid-assessment
 window.addEventListener('beforeunload', (e) => {
-  if (currentIndex < tasks.length && tasks.length > 0) {
+  if (currentDomainIndex < DOMAINS.length && DOMAINS.length > 0) {
     e.preventDefault();
   }
 });
