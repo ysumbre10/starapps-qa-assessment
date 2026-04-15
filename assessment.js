@@ -1266,11 +1266,9 @@
     }
 
     /* Wrap submit button row in sticky bar */
-    if (card) {
-      var submitRow = card.querySelector('[style*="display:flex"][style*="margin-top:24px"]');
-      if (submitRow && !submitRow.classList.contains('split-submit-bar')) {
-        submitRow.classList.add('split-submit-bar');
-      }
+    var submitRow = document.getElementById('submitRow');
+    if (submitRow && !submitRow.classList.contains('split-submit-bar')) {
+      submitRow.classList.add('split-submit-bar');
     }
 
     /* Force sticky timer strip to show (replaces the hidden .timer-wrap) */
@@ -1287,6 +1285,8 @@
     if (bar && bar.parentNode) bar.parentNode.removeChild(bar);
     var strip = document.getElementById('stickyTimerStrip');
     if (strip) strip.classList.remove('show');
+    var submitRow = document.getElementById('submitRow');
+    if (submitRow) submitRow.classList.remove('split-submit-bar');
   }
 
   /* ── Helpers ───────────────────────────────────────────────── */

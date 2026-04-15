@@ -1,5 +1,6 @@
 # ── Secrets & local config ──────────────────────────────────
 config.js
+answers.md
 
 # ── Editor / tool artifacts ──────────────────────────────────
 .claude/
