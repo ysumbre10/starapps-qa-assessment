@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Submitted — QA Skill Check</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<div class="page">
+
+  <header>
+    <div class="container">
+      <nav class="site-header">
+        <a class="logo" href="index.html">
+          <div class="logo-mark">QA</div>
+          <span class="logo-text">Skill<span>Check</span></span>
+        </a>
+        <span style="font-size:13px;color:var(--text-muted);">by Starapps Studio</span>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+
+      <!-- Hero -->
+      <div class="thankyou-hero">
+        <div class="check-circle">✓</div>
+        <h1>Assessment Complete</h1>
+        <p>Your answers have been recorded. Thank you for taking the time — results are reviewed by a human, not an algorithm.</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="summary-grid" id="summaryGrid">
+        <div class="summary-stat">
+          <div class="stat-num" id="statTasks">—</div>
+          <div class="stat-label">Tasks Submitted</div>
+        </div>
+        <div class="summary-stat">
+          <div class="stat-num" id="statCompletion">—</div>
+          <div class="stat-label">Completion</div>
+        </div>
+        <div class="summary-stat">
+          <div class="stat-num" id="statTime">—</div>
+          <div class="stat-label">Avg. Time Per Task</div>
+        </div>
+      </div>
+
+      <!-- Task summary -->
+      <div class="card" id="taskSummary" style="margin-bottom:24px;">
+        <h2 style="font-size:18px;font-weight:700;margin-bottom:20px;">Your submissions</h2>
+        <div id="taskSummaryList"></div>
+      </div>
+
+      <!-- What's next -->
+      <div class="card" style="margin-bottom:24px;">
+        <h2 style="font-size:18px;font-weight:700;margin-bottom:12px;">What happens next</h2>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:12px;">
+          <li style="display:flex;gap:12px;align-items:flex-start;font-size:14px;color:var(--text-muted);">
+            <span style="color:var(--accent);font-weight:700;flex-shrink:0;">01</span>
+            Your answers are reviewed by a senior QA practitioner at Starapps Studio — typically within 3–5 business days.
+          </li>
+          <li style="display:flex;gap:12px;align-items:flex-start;font-size:14px;color:var(--text-muted);">
+            <span style="color:var(--accent);font-weight:700;flex-shrink:0;">02</span>
+            If there's a strong match, we will reach out via the email you provided.
+          </li>
+          <li style="display:flex;gap:12px;align-items:flex-start;font-size:14px;color:var(--text-muted);">
+            <span style="color:var(--accent);font-weight:700;flex-shrink:0;">03</span>
+            Aggregate (anonymized) insights from this assessment may be shared publicly on LinkedIn.
+          </li>
+        </ul>
+      </div>
+
+      <!-- Share -->
+      <div class="card card-sm" style="text-align:center;margin-bottom:48px;">
+        <p style="font-size:14px;color:var(--text-muted);margin-bottom:16px;">
+          Know someone else who should take this? Share the challenge.
+        </p>
+        <a
+          id="shareBtn"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-ghost"
+          style="display:inline-flex;"
+        >
+          Share on LinkedIn
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      &copy; 2025 Starapps Studio · QA Skill Check
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  const TASK_DOMAINS = [
+    'API Testing',
+    'Back-End Debugging',
+    'DB Log Reading',
+    'Test Automation',
+    'Root Cause Analysis',
+    'Complex Systems',
+    'AI in QA'
+  ];
+
+  const responses = JSON.parse(sessionStorage.getItem('qa_responses') || '{}');
+  const timings = JSON.parse(sessionStorage.getItem('qa_timings') || '{}');
+  const candidate = JSON.parse(sessionStorage.getItem('qa_candidate') || '{}');
+
+  // Stats
+  const submittedCount = Object.keys(responses).length;
+  const totalTasks = 7;
+  const completionPct = Math.round((submittedCount / totalTasks) * 100);
+
+  const timingValues = Object.values(timings).filter(v => typeof v === 'number');
+  const avgTimeSecs = timingValues.length
+    ? Math.round(timingValues.reduce((a, b) => a + b, 0) / timingValues.length)
+    : 0;
+  const avgMins = Math.floor(avgTimeSecs / 60);
+  const avgSecs = avgTimeSecs % 60;
+
+  document.getElementById('statTasks').textContent = `${submittedCount} / ${totalTasks}`;
+  document.getElementById('statCompletion').textContent = completionPct + '%';
+  document.getElementById('statTime').textContent = `${avgMins}m ${String(avgSecs).padStart(2, '0')}s`;
+
+  // Task summary list
+  const listEl = document.getElementById('taskSummaryList');
+  TASK_DOMAINS.forEach((domain, i) => {
+    const key = `task_${i + 1}`;
+    const answer = responses[key];
+    const timeKey = `task_${i + 1}_secs`;
+    const timeSecs = timings[timeKey];
+
+    const item = document.createElement('div');
+    item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);gap:16px;flex-wrap:wrap;';
+
+    const left = document.createElement('div');
+    left.style.cssText = 'display:flex;align-items:center;gap:12px;';
+
+    const numBadge = document.createElement('div');
+    numBadge.style.cssText = 'width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;';
+
+    if (answer) {
+      numBadge.style.background = 'rgba(34,197,94,0.15)';
+      numBadge.style.color = '#22c55e';
+      numBadge.textContent = '✓';
+    } else {
+      numBadge.style.background = 'var(--bg-input)';
+      numBadge.style.color = 'var(--text-dim)';
+      numBadge.textContent = (i + 1).toString();
+    }
+
+    const domainText = document.createElement('span');
+    domainText.style.cssText = 'font-size:14px;font-weight:500;color:var(--text);';
+    domainText.textContent = domain;
+
+    left.appendChild(numBadge);
+    left.appendChild(domainText);
+
+    const right = document.createElement('div');
+    right.style.cssText = 'font-size:12px;color:var(--text-muted);font-family:var(--font-mono);';
+
+    if (timeSecs !== undefined) {
+      const m = Math.floor(timeSecs / 60);
+      const s = timeSecs % 60;
+      right.textContent = `${m}m ${String(s).padStart(2, '0')}s`;
+    } else {
+      right.textContent = answer ? 'submitted' : 'skipped';
+    }
+
+    item.appendChild(left);
+    item.appendChild(right);
+    listEl.appendChild(item);
+  });
+
+  // Remove last border
+  const items = listEl.querySelectorAll('div');
+  if (items.length) items[items.length - 1].style.borderBottom = 'none';
+
+  // LinkedIn share link (generic — replace URL with your deployed site URL)
+  const shareText = encodeURIComponent(`I just completed the QA Skill Check — 7 real-world QA tasks across API testing, automation, DB logs, RCA, and AI in QA. Think you can do better? Give it a shot:`);
+  const shareUrl = encodeURIComponent(window.location.origin + '/index.html');
+  document.getElementById('shareBtn').href = `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}&summary=${shareText}`;
+
+  // Clear session after viewing thank-you (so re-visiting index starts fresh)
+  // We wait a moment so if user refreshes this page it still shows stats
+  setTimeout(() => {
+    sessionStorage.removeItem('qa_current_task');
+  }, 5000);
+</script>
+
+</body>
+</html>

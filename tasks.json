@@ -1,0 +1,65 @@
+[
+  {
+    "id": 1,
+    "domain": "API Testing",
+    "title": "Design a Test Plan for a REST API Endpoint",
+    "scenario": "You receive a REST API endpoint:\n\nPOST /api/v1/orders\n\nRequest body:\n{\n  \"user_id\": 1023,\n  \"items\": [{ \"product_id\": 55, \"qty\": 2 }],\n  \"coupon_code\": \"SAVE10\"\n}\n\nResponse:\n{\n  \"order_id\": \"ORD-9182\",\n  \"total_price\": 89.99\n}",
+    "question": "Write a test plan covering:\n1. Happy path scenarios\n2. Edge cases (empty items array, qty = 0, missing fields)\n3. Negative cases (invalid user_id, expired coupon, wrong data types)\n4. Security checks (SQL injection in coupon_code, oversized payload, unauthorized access)\n\nAlso write one sample cURL command to test an invalid coupon code.",
+    "placeholder": "Write your test plan here. Use numbered lists, bullet points — whatever structure works best for you.",
+    "timeLimit": 600
+  },
+  {
+    "id": 2,
+    "domain": "Back-End Testing",
+    "title": "Investigate a Silent Payment Bug",
+    "scenario": "A payment service processes orders. After a production deploy on Monday morning, some orders are stuck in PENDING status indefinitely. No exception or error is thrown anywhere. Users are charged but orders never fulfill.\n\nYou have access to:\n- Service logs (application + infra)\n- The database (read access)\n- The codebase (recent diff from the deploy)\n- The message queue dashboard",
+    "question": "Describe your investigation approach step by step.\n\n1. What do you check first — and why?\n2. What do you check second?\n3. What do you check third?\n4. For each hypothesis, what evidence would confirm it? What would rule it out?\n5. What would you put in your bug report?",
+    "placeholder": "Walk through your investigation process clearly. Show your reasoning at each step.",
+    "timeLimit": 600
+  },
+  {
+    "id": 3,
+    "domain": "DB Log Reading",
+    "title": "Interpret a Production Database Error Sequence",
+    "scenario": "The following log snippet was captured from a production database during a high-traffic period:\n\n2024-03-10 14:32:01 [WARN]  Slow query detected: 4320ms\n                            Query: SELECT * FROM orders WHERE user_id = 9182 AND status = 'PENDING'\n\n2024-03-10 14:32:04 [ERROR] Deadlock found when trying to get lock; try restarting transaction\n                            Involved tables: orders, order_items\n\n2024-03-10 14:32:04 [ERROR] Transaction rollback: order_id=78234\n                            Reason: lock wait timeout exceeded\n\n2024-03-10 14:32:05 [INFO]  Retry attempt 1/3 for order_id=78234\n\n2024-03-10 14:32:09 [ERROR] Retry failed. Max attempts reached.\n                            order_id=78234 marked as FAILED.",
+    "question": "Answer the following:\n\n1. What happened here? Walk through the sequence of events in plain English.\n2. What is the most likely root cause?\n3. What would you report to the developer — be specific about what to fix.\n4. Write 2–3 test cases you would add to prevent this regression.",
+    "placeholder": "Interpret the logs clearly. No prior knowledge of this system is assumed — explain your reasoning.",
+    "timeLimit": 600
+  },
+  {
+    "id": 4,
+    "domain": "Test Automation",
+    "title": "Write Automated Tests for a Login Flow",
+    "scenario": "You need to automate the login flow for a web application.\n\nThe login page has:\n- An email input field (id: 'email')\n- A password input field (id: 'password')\n- A 'Remember Me' checkbox (id: 'remember-me')\n- A submit button (id: 'login-btn')\n\nAfter successful login, the user lands on a dashboard page at /dashboard with a greeting: \"Welcome, {name}\".\n\nOn failure, an error message appears: \"Invalid email or password.\"",
+    "question": "Write a test script (use Playwright, Cypress, or Selenium — your choice) covering:\n\n(a) Successful login with valid credentials\n(b) Login attempt with invalid password\n(c) Form submission with empty email and password fields\n\nYou don't need to run it — write clean, readable code with clear assertions.",
+    "placeholder": "Paste your test script here. Mention which framework you are using at the top.",
+    "timeLimit": 600
+  },
+  {
+    "id": 5,
+    "domain": "Root Cause Analysis",
+    "title": "Trace an Undetected Platform-Specific Bug",
+    "scenario": "A critical bug is reported post-release:\n\n\"Users on iOS 16 (Safari) cannot complete checkout. The Pay button appears but does nothing when tapped. No error message is shown.\"\n\nThis works correctly on:\n- Android Chrome\n- Desktop Chrome, Firefox, Safari\n- iOS 15 (Safari)\n\nThis bug was NOT caught in QA before release.",
+    "question": "Walk through your root cause analysis:\n\n1. What questions do you ask immediately to scope the issue?\n2. What do you investigate technically (DOM, JS errors, network, CSS)?\n3. Apply the 5-Whys: why was this not caught in QA?\n4. What process changes would you recommend to prevent this class of bug in the future?",
+    "placeholder": "Be structured. Show how you think through platform bugs — from immediate triage to long-term prevention.",
+    "timeLimit": 600
+  },
+  {
+    "id": 6,
+    "domain": "Complex Systems",
+    "title": "Trace a Failure Across a Microservices Chain",
+    "scenario": "An e-commerce platform is built on these services (in order):\n\nAuth Service → Product Catalog → Cart Service → Payment Service → Order Service → Notification Service\n\nA user reports:\n\"I was charged on my credit card but never received an order confirmation email. My account shows no orders.\"\n\nThe payment service logs show the transaction was successful.",
+    "question": "Answer the following:\n\n1. Which services do you suspect — and in what priority order?\n2. How do you trace the issue across services without a centralized tracing tool?\n3. What data would you query in each service to find the break point?\n4. What observability gaps does this incident reveal?\n5. Write an end-to-end test case that would have caught this issue before it hit production.",
+    "placeholder": "Think through distributed system failures carefully. Show awareness of inter-service contracts, data consistency, and failure modes.",
+    "timeLimit": 600
+  },
+  {
+    "id": 7,
+    "domain": "AI in QA",
+    "title": "Real-World Use of AI in Your QA Workflow",
+    "scenario": "AI tools (ChatGPT, Claude, GitHub Copilot, etc.) are increasingly part of QA workflows — for writing test cases, generating test data, reading logs, writing automation scripts, and more.",
+    "question": "Answer all three parts:\n\n1. How are you currently using AI in your QA work? Be specific — not just \"I use it for test cases\" but what exactly, which tool, and what prompt or workflow.\n\n2. Give one concrete example where AI genuinely helped you save time or catch something you might have missed. OR: one example where you tried AI and it gave a wrong or misleading result.\n\n3. Where do you think AI should NOT replace a human QA engineer — and why? Be honest, not just diplomatic.",
+    "placeholder": "Be specific and honest. We are not looking for enthusiasm — we are looking for real experience and critical thinking.",
+    "timeLimit": 600
+  }
+]

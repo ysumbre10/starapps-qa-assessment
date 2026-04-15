@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Assessment — QA Skill Check</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Header -->
+  <header>
+    <div class="container">
+      <nav class="site-header">
+        <a class="logo" href="index.html">
+          <div class="logo-mark">QA</div>
+          <span class="logo-text">Skill<span>Check</span></span>
+        </a>
+        <span id="headerCandidate" style="font-size:13px;color:var(--text-muted);"></span>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Progress bar (sticky) -->
+  <div class="progress-bar-wrap">
+    <div class="container">
+      <div class="progress-info">
+        <span class="progress-label" id="progressLabel">Task 1 of 7</span>
+        <span class="progress-count" id="progressDomain"></span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main task area -->
+  <main style="padding:32px 0 64px;">
+    <div class="container">
+
+      <!-- Timer -->
+      <div class="timer-wrap">
+        <div style="text-align:center;">
+          <div class="timer-label">Time Remaining</div>
+          <div class="timer-display" id="timerDisplay">10:00</div>
+        </div>
+        <div class="timer-ring">
+          <svg viewBox="0 0 56 56" width="56" height="56">
+            <circle class="timer-ring-bg" cx="28" cy="28" r="23"/>
+            <circle class="timer-ring-progress" id="timerRing" cx="28" cy="28" r="23"/>
+          </svg>
+        </div>
+        <div style="text-align:center;">
+          <div class="timer-label">Auto-submits at</div>
+          <div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--text-muted);" id="autoSubmitAt">—</div>
+        </div>
+      </div>
+
+      <div id="autosubmitNotice" class="autosubmit-notice" style="display:none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Under 2 minutes remaining — your answer will auto-submit when the timer ends.
+      </div>
+
+      <!-- Task card -->
+      <div class="card" id="taskCard">
+        <div class="task-header">
+          <div class="task-domain-badge" id="taskDomain">Domain</div>
+          <h1 class="task-title" id="taskTitle">Loading task...</h1>
+
+          <div style="margin-bottom:16px;">
+            <h3 style="font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Scenario</h3>
+            <div class="scenario-block" id="taskScenario"></div>
+          </div>
+
+          <div class="question-block">
+            <h3>Your Task</h3>
+            <div id="taskQuestion"></div>
+          </div>
+        </div>
+
+        <span class="answer-label">Your Answer</span>
+        <textarea
+          class="answer-textarea"
+          id="answerBox"
+          placeholder="Type your answer here..."
+          spellcheck="true"
+        ></textarea>
+        <div class="char-count"><span id="charCount">0</span> characters</div>
+
+        <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-lg" id="submitBtn" style="flex:1;min-width:200px;">
+            Submit &amp; Next Task →
+          </button>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Saved on submit
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      &copy; 2025 Starapps Studio · QA Skill Check
+    </div>
+  </footer>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

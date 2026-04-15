@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Instructions — QA Skill Check</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<div class="page">
+
+  <header>
+    <div class="container">
+      <nav class="site-header">
+        <a class="logo" href="index.html">
+          <div class="logo-mark">QA</div>
+          <span class="logo-text">Skill<span>Check</span></span>
+        </a>
+        <span style="font-size:13px;color:var(--text-muted);">by Starapps Studio</span>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container" style="padding-top:48px;padding-bottom:64px;">
+
+      <div style="margin-bottom:32px;">
+        <h1 style="font-size:32px;font-weight:700;letter-spacing:-1px;margin-bottom:10px;">Before you begin</h1>
+        <p style="color:var(--text-muted);font-size:17px;">Read these rules carefully. The assessment starts the moment you click <strong style="color:var(--text)">Begin Assessment</strong>.</p>
+      </div>
+
+      <!-- Rules -->
+      <div class="card" style="margin-bottom:24px;">
+        <h2 style="font-size:18px;font-weight:700;margin-bottom:24px;">Rules &amp; Format</h2>
+        <ol class="rules-list">
+          <li>
+            <div class="rule-num">1</div>
+            <div class="rule-text"><strong>7 tasks, one at a time.</strong> You will see one task at a time. The next task only appears after you submit the current one.</div>
+          </li>
+          <li>
+            <div class="rule-num">2</div>
+            <div class="rule-text"><strong>10 minutes per task.</strong> A visible countdown runs for each task. When it reaches zero, your answer is automatically submitted — even if blank.</div>
+          </li>
+          <li>
+            <div class="rule-num">3</div>
+            <div class="rule-text"><strong>No going back.</strong> Once a task is submitted, it is locked. You cannot edit previous answers.</div>
+          </li>
+          <li>
+            <div class="rule-num">4</div>
+            <div class="rule-text"><strong>Open-ended answers.</strong> There are no multiple-choice options. Type your answers in the provided text area. Code, lists, and plain prose are all fine.</div>
+          </li>
+          <li>
+            <div class="rule-num">5</div>
+            <div class="rule-text"><strong>No collaboration tools.</strong> You may use documentation and your own knowledge. This is an individual assessment — please do not use AI assistants to generate your answers.</div>
+          </li>
+          <li>
+            <div class="rule-num">6</div>
+            <div class="rule-text"><strong>You can submit early.</strong> If you finish a task before the 10 minutes are up, click <em>Submit &amp; Next Task</em> to move on immediately.</div>
+          </li>
+          <li>
+            <div class="rule-num">7</div>
+            <div class="rule-text"><strong>Stable connection required.</strong> Answers are saved when you submit each task. If your browser closes mid-task, that task's answer may be lost.</div>
+          </li>
+        </ol>
+      </div>
+
+      <!-- What's covered -->
+      <div class="card" style="margin-bottom:24px;">
+        <h2 style="font-size:18px;font-weight:700;margin-bottom:8px;">What you'll be assessed on</h2>
+        <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;">Seven domains — one task each. No domain is repeated.</p>
+        <div class="domain-list">
+          <div class="domain-item"><span class="num">01</span> API Testing</div>
+          <div class="domain-item"><span class="num">02</span> Back-End Debugging</div>
+          <div class="domain-item"><span class="num">03</span> DB Log Reading</div>
+          <div class="domain-item"><span class="num">04</span> Test Automation</div>
+          <div class="domain-item"><span class="num">05</span> Root Cause Analysis</div>
+          <div class="domain-item"><span class="num">06</span> Complex Systems</div>
+          <div class="domain-item"><span class="num">07</span> AI in QA</div>
+        </div>
+      </div>
+
+      <!-- Scoring note -->
+      <div class="card" style="margin-bottom:24px;">
+        <h2 style="font-size:18px;font-weight:700;margin-bottom:8px;">How answers are evaluated</h2>
+        <p style="color:var(--text-muted);font-size:14px;line-height:1.7;">
+          There are no automated scores. Every response is reviewed by a human QA practitioner at Starapps Studio. We are looking for <strong style="color:var(--text)">structured thinking</strong>, not keyword matching. A shorter, well-reasoned answer scores higher than a long, unfocused one.
+        </p>
+      </div>
+
+      <!-- Candidate name confirmation -->
+      <div class="card card-sm" style="margin-bottom:32px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:4px;">Registered as</div>
+          <div id="candidateName" style="font-size:16px;font-weight:600;color:var(--text);">—</div>
+        </div>
+        <a href="index.html" class="btn btn-ghost" style="font-size:13px;padding:8px 16px;">Not you? Go back</a>
+      </div>
+
+      <div class="notice notice-danger">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div><strong>Clicking the button below starts your first 10-minute timer immediately.</strong> Make sure you are ready before proceeding.</div>
+      </div>
+
+      <div style="margin-top:24px;">
+        <button id="beginBtn" class="btn btn-primary btn-lg btn-full">
+          Begin Assessment — Task 1 of 7 →
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      &copy; 2025 Starapps Studio · QA Skill Check
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  // Guard: redirect to index if no candidate data
+  const candidateRaw = sessionStorage.getItem('qa_candidate');
+  if (!candidateRaw) {
+    window.location.href = 'index.html';
+  } else {
+    const candidate = JSON.parse(candidateRaw);
+    document.getElementById('candidateName').textContent = candidate.fullName + ' · ' + candidate.email;
+  }
+
+  document.getElementById('beginBtn').addEventListener('click', function () {
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner"></span> Starting...';
+    sessionStorage.setItem('qa_current_task', '0');
+    setTimeout(() => {
+      window.location.href = 'assessment.html';
+    }, 500);
+  });
+</script>
+
+</body>
+</html>
