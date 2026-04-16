@@ -63,16 +63,21 @@
 </div>
 
 <script>
-  const raw = sessionStorage.getItem('qa_candidate');
+  var raw = sessionStorage.getItem('qa_candidate');
   if (!raw) { window.location.href = 'index.html'; }
   else {
-    const c = JSON.parse(raw);
+    var c = JSON.parse(raw);
     document.getElementById('candidateName').textContent = c.fullName + ' · ' + c.email;
   }
 
-  document.getElementById('beginBtn').addEventListener('click', function () {
-    // If the assessment is already in progress, go to the current domain
-    // instead of resetting the index back to 0.
+  /* Update button label if resuming a partially-completed assessment */
+  var _currentTask = parseInt(sessionStorage.getItem('qa_current_task') || '-1', 10);
+  var _beginBtn    = document.getElementById('beginBtn');
+  if (_currentTask > 0) {
+    _beginBtn.textContent = 'Resume Assessment → Domain ' + (_currentTask + 1) + ' of 10';
+  }
+
+  _beginBtn.addEventListener('click', function () {
     var current = parseInt(sessionStorage.getItem('qa_current_task') || '-1', 10);
     if (current > 0) {
       window.location.href = 'assessment.html';

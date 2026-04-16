@@ -828,6 +828,7 @@
   var _responses   = {};
   var _timings     = {};
   var _done        = false;
+  var _submitting  = false;  /* true while a domain submit is in flight; prevents double-submit */
   var _tampered    = false;  /* sessionStorage tampering detected on load             */
   var _tabSwitches = 0;      /* times candidate hid / left the tab                   */
 
@@ -838,9 +839,9 @@
     var raw = sessionStorage.getItem('qa_candidate');
     if (!raw) { window.location.href = 'index.html'; return; }
 
-    _candidate  = JSON.parse(raw);
-    _responses  = JSON.parse(sessionStorage.getItem('qa_responses') || '{}');
-    _timings    = JSON.parse(sessionStorage.getItem('qa_timings')   || '{}');
+    try { _candidate = JSON.parse(raw); } catch (e) { window.location.href = 'index.html'; return; }
+    try { _responses = JSON.parse(sessionStorage.getItem('qa_responses') || '{}'); } catch (e) { _responses = {}; }
+    try { _timings   = JSON.parse(sessionStorage.getItem('qa_timings')   || '{}'); } catch (e) { _timings   = {}; }
     _idx        = parseInt(sessionStorage.getItem('qa_current_task') || '0', 10);
 
     /* ── Submitted-lock: prevent retaking after full submission ───
@@ -888,7 +889,7 @@
 
   /* Warn before leaving mid-assessment */
   window.addEventListener('beforeunload', function (e) {
-    if (!_done) { e.preventDefault(); e.returnValue = ''; }
+    if (!_done) { e.preventDefault(); }
   });
 
   /* Track tab switches - signals candidate left to look up answers */
@@ -912,7 +913,7 @@
     _sel = Array.from({ length: domain.mcqs.length }, function () { return []; });
 
     /* Progress */
-    document.getElementById('progressFill').style.width   = ((idx / _D.length) * 100) + '%';
+    document.getElementById('progressFill').style.width   = (((idx + 1) / _D.length) * 100) + '%';
     document.getElementById('progressLabel').textContent  = 'Domain ' + (idx + 1) + ' of ' + _D.length;
     document.getElementById('progressDomain').textContent = domain.domain;
 
@@ -1015,7 +1016,7 @@
         '<div class="task-question-label">Your Task</div>' +
         '<div class="task-question-text">' + esc(task.question) + '</div>' +
         '<span class="answer-label">Your Answer</span>' +
-        '<textarea class="answer-textarea" id="task_' + ti + '" placeholder="' + esc(task.placeholder) + '"></textarea>' +
+        '<textarea class="answer-textarea" id="task_' + ti + '" placeholder="' + esc(task.placeholder).replace(/<br>/g, '&#10;') + '"></textarea>' +
         '<div class="char-count" id="chars_' + ti + '">0 characters</div>';
 
       taskEl.appendChild(block);
@@ -1179,6 +1180,8 @@
 
   /* ── Submit ────────────────────────────────────────────────── */
   function submitDomain(isAuto) {
+    if (_done || _submitting) return;  /* guard: timer + watchdog can both be queued at t=0 */
+    _submitting = true;
     clearInterval(_timer);
     clearTimeout(_watchdog);
 
@@ -1267,7 +1270,8 @@
     setTimeout(function () {
       teardownSplitMode();
       document.getElementById('autosubmitNotice').style.display = 'none';
-      btn.disabled  = false;
+      btn.disabled   = false;
+      _submitting    = false;   /* unlock for next domain's submit */
       card.style.opacity = '1';
       renderDomain(_idx);
     }, 250);
@@ -1445,7 +1449,7 @@
           flat[col]              = (resp.taskAnswers && resp.taskAnswers[ti]) || '';
           flat[col + '_score']   = (aiEntry && typeof aiEntry.score    === 'number') ? aiEntry.score    : '';
           flat[col + '_feedback']= (aiEntry && typeof aiEntry.feedback === 'string') ? aiEntry.feedback : '';
-          if (aiEntry && typeof aiEntry.score === 'number') totalTaskScore += aiEntry.score;
+          if (aiEntry && typeof aiEntry.score === 'number' && aiEntry.score >= 0 && aiEntry.score <= 10) totalTaskScore += aiEntry.score;
         });
 
         flat[key + '_time_secs']  = _timings[key + '_secs'] || 0;

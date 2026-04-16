@@ -154,6 +154,17 @@
 </div>
 
 <script>
+  /* Redirect if an assessment is already in progress (prevents mid-assessment
+     re-registration that would silently wipe qa_responses / qa_timings).     */
+  (function () {
+    var _task      = sessionStorage.getItem('qa_current_task');
+    var _submitted = sessionStorage.getItem('qa_submitted');
+    if (_task !== null && !_submitted) {
+      /* Assessment started and not yet fully submitted — send them back */
+      window.location.href = (parseInt(_task, 10) > 0) ? 'assessment.html' : 'instructions.html';
+    }
+  }());
+
   /* Close modal on overlay click (outside the box) */
   document.getElementById('termsModal').addEventListener('click', function (e) {
     if (e.target === this) this.classList.remove('open');
