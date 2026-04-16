@@ -32,7 +32,7 @@
       <div class="summary-grid animate-in delay-1">
         <div class="summary-stat">
           <div class="stat-num" id="statTotal">—</div>
-          <div class="stat-label">Total Marks</div>
+          <div class="stat-label">Score</div>
         </div>
         <div class="summary-stat">
           <div class="stat-num" id="statDomains">—</div>
@@ -48,27 +48,15 @@
       <div class="marks-legend animate-in delay-2">
         <div class="marks-legend-item">
           <strong>MCQ</strong>
-          2 marks per correct answer
+          Auto-graded — each correct answer contributes to your score
         </div>
         <div class="marks-legend-item">
           <strong>Open Task</strong>
-          Scored 0–10 per task by our team
+          Reviewed by our team and scored 0–10 per task
         </div>
         <div class="marks-legend-item">
-          <strong>Manual Testing</strong>
-          14 marks (7 MCQs, no open tasks)
-        </div>
-        <div class="marks-legend-item">
-          <strong>QA Playground</strong>
-          36 marks (8 MCQs + 2 open tasks)
-        </div>
-        <div class="marks-legend-item">
-          <strong>AI Prompting</strong>
-          40 marks (4 open tasks, no MCQs)
-        </div>
-        <div class="marks-legend-item">
-          <strong>Grand Total</strong>
-          300 marks
+          <strong>Final Score</strong>
+          All raw marks normalized to a score out of 100
         </div>
       </div>
 
@@ -114,10 +102,10 @@
   /* ── Marks scheme ── */
   var MCQ_MARKS_PER_Q = 2;   // per correct MCQ answer
   var TASK_MARKS_MAX  = 10;  // scored 0-10 per task by our team
-  // Grand total (dynamic): 50 MCQs × 2 + 20 tasks × 10 = 100 + 200 = 300
+  // Grand total raw (dynamic): 50 MCQs × 2 + 20 tasks × 10 = 100 + 200 = 300
   var GRAND_MAX = DOMAINS.reduce(function (sum, d) {
     return sum + d.mcqs.length * MCQ_MARKS_PER_Q + d.tasks.length * TASK_MARKS_MAX;
-  }, 0); // 260
+  }, 0); // 300
 
   /* ── Raw data ── */
   var responses = JSON.parse(sessionStorage.getItem('qa_responses') || '{}');
@@ -158,15 +146,17 @@
     if (t) timingValues.push(t);
   });
 
-  var totalMarks  = totalMcqMarks + totalAiMarks;
-  var allAiDone   = aiTasksScored === aiTasksExpected && aiTasksExpected > 0;
+  var totalMarks      = totalMcqMarks + totalAiMarks;
+  var allAiDone       = aiTasksScored === aiTasksExpected && aiTasksExpected > 0;
+  /* Normalize raw marks to /100 */
+  var normalizedScore = GRAND_MAX > 0 ? Math.round((totalMarks / GRAND_MAX) * 100) : 0;
 
   /* ── Summary stats ── */
   var avgSecs = timingValues.length
     ? Math.round(timingValues.reduce(function (a, b) { return a + b; }, 0) / timingValues.length)
     : 0;
 
-  document.getElementById('statTotal').textContent   = totalMarks + (allAiDone ? '' : '+') + ' / ' + GRAND_MAX;
+  document.getElementById('statTotal').textContent   = normalizedScore + (allAiDone ? '' : '+') + ' / 100';
   document.getElementById('statDomains').textContent = domainsCompleted + ' / ' + DOMAINS.length;
   document.getElementById('statAvgTime').textContent = Math.floor(avgSecs / 60) + 'm' + String(avgSecs % 60).padStart(2, '0') + 's';
 
