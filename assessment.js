@@ -334,22 +334,22 @@
       domain: 'Test Automation',
       mcqs: [
         {
-          q: 'A Playwright test fails in CI with "element not found" on a button that appears after an async API call. It passes 100% locally. What is the correct fix?',
+          q: 'An automated UI test fails in CI with "element not found" on a button that only appears after an async API call. It passes 100% locally. What is the correct fix?',
           options: [
-            'Add await page.waitForTimeout(3000) before the click to give CI extra time',
-            'Use await expect(page.getByTestId(\'submit-btn\')).toBeVisible() - it retries automatically until the element appears or the timeout is reached',
-            'Set timeout: 60000 globally in playwright.config.ts to accommodate slower CI runners',
-            'Wrap the click in a try/catch and retry up to 3 times with a 2-second sleep between attempts',
+            'Add a hardcoded sleep of 3 seconds before the click to give CI extra time',
+            'Use your framework\'s smart wait or built-in assertion retry — most tools will keep checking until the element is visible or the timeout is reached',
+            'Increase the global timeout to 60 seconds in your test config to accommodate slower CI runners',
+            'Wrap the click in a try/catch and retry up to 3 times with a 2-second pause between attempts',
             'All of the above'
           ]
         },
         {
-          q: 'Which selector would remain stable after an application update that renames CSS classes, restructures the DOM, and changes button text?',
+          q: 'Which type of selector remains stable after an application update that renames CSS classes, restructures the DOM, and changes button text?',
           options: [
-            'page.locator(\'.add-to-cart-btn\') - a CSS class selector',
-            'page.locator(\'//div[@class="product"]/button[1]\') - an XPath positional selector',
-            'page.getByTestId(\'add-to-cart\') - a data-testid attribute controlled independently of styling',
-            'page.locator(\'button:has-text("Add to cart")\') - a text content selector',
+            'A CSS class selector like .add-to-cart-btn — tied directly to styling class names',
+            'An XPath positional selector like //div/button[1] — tied to DOM structure and position',
+            'A dedicated test attribute selector like data-testid="add-to-cart" — controlled independently of styling, structure, or copy',
+            'A text content selector that matches the visible button label — brittle to any wording change',
             'All of the above'
           ]
         },
@@ -358,8 +358,8 @@
           options: [
             'Delete them immediately - flaky tests erode confidence and waste CI time',
             'Mark all of them as skipped until you have time to investigate',
-            'Run each flaky test 5 times and categorise whether each one fails consistently or inconsistently across runs',
-            'Add await page.waitForTimeout(2000) to each flaky test as a stopgap fix',
+            'Run each flaky test several times and categorise whether each one fails consistently or intermittently across runs',
+            'Add a hardcoded sleep to each flaky test as a quick stopgap fix',
             'All of the above'
           ]
         },
@@ -376,7 +376,7 @@
         {
           q: '52 automated tests broke when the "Submit" button text changed to "Confirm order". What is the root cause?',
           options: [
-            'The tests use text-based selectors like page.getByText(\'Submit\') - brittle to any copy change',
+            'The tests use text-based selectors that match the visible button label — brittle to any copy change',
             'The tests lack proper setup and teardown hooks, leaving shared state between runs',
             'Tests share mutable global state and rely on a specific execution order',
             'The CI pipeline does not pull the latest app build before running the suite',
@@ -386,18 +386,18 @@
       ],
       tasks: [
         {
-          title: 'Write Your First Playwright Test',
-          scenario: 'You need to automate a login flow:\n  Page: /login\n  Elements: [data-testid="email-input"], [data-testid="password-input"], [data-testid="login-btn"]\n  Success: User lands on /dashboard\n  Failure: Error message at [data-testid="error-msg"]',
-          question: 'Write a Playwright test for:\n(a) Successful login - assert the user reaches /dashboard\n(b) Wrong password - assert the error message is visible',
-          placeholder: 'test(\'login - success\', async ({ page }) => {\n  ...\n});\n\ntest(\'login - wrong password\', async ({ page }) => {\n  ...\n});',
-          evalPrompt: 'You are a senior SDET evaluating basic Playwright test code for a login flow. Score 0–10: correct async/await and Playwright syntax (2 pts), data-testid selectors used correctly (2 pts), successful login test with URL or element assertion (3 pts), wrong password test with error message assertion (3 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          title: 'Automate a Login Flow',
+          scenario: 'You need to automate a login flow:\n  Page: /login\n  Elements: email input, password input, a login button, and an error message area\n  Success: User lands on /dashboard\n  Failure: An error message appears on screen',
+          question: 'Using any automation framework or language you are comfortable with, write tests for:\n(a) Successful login — assert the user reaches /dashboard\n(b) Wrong password — assert the error message is visible\n\nYou can write real code, pseudocode, or a clear step-by-step description of what each test does.',
+          placeholder: '// Test (a) - Successful login\n...\n\n// Test (b) - Wrong password\n...',
+          evalPrompt: 'You are a senior SDET evaluating an automated test written for a login flow. The candidate may use any framework or language (Playwright, Selenium, Cypress, pytest, Robot Framework, pseudocode, etc.) or describe tests as structured prose — do not penalise for framework choice or syntax style. Score 0–10: test structure — are the two scenarios clearly separated with distinct setup, action, and assertion steps? (2 pts); successful login test — does it navigate to the login page, enter valid credentials, submit, and assert the user reaches a success state such as /dashboard? (4 pts); wrong password test — does it enter invalid credentials and assert that an error message is visible? (4 pts). Reward correctness of logic and coverage over syntax perfection. Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         },
         {
           title: 'Fix These Broken Test Habits',
-          scenario: 'A colleague\'s test file has three problems:\n  1. Tests fail in CI 30% of the time but always pass locally\n  2. Test B depends on data created by Test A - if A is skipped, B fails\n  3. Every test uses page.waitForTimeout(3000) to "wait for things to load"',
+          scenario: 'A colleague\'s test suite has three problems:\n  1. Tests fail in CI 30% of the time but always pass locally\n  2. Test B depends on data created by Test A — if A is skipped, B fails\n  3. Every test uses a hardcoded sleep/pause of 3 seconds to "wait for things to load"',
           question: 'For each of the 3 problems: explain the root cause in one sentence and suggest one specific fix.',
           placeholder: 'Problem 1 - Cause: ... Fix: ...\nProblem 2 - Cause: ... Fix: ...\nProblem 3 - Cause: ... Fix: ...',
-          evalPrompt: 'You are a senior SDET evaluating automation anti-pattern analysis. Score 0–10: correct root cause identification for each of the 3 problems — are the explanations technically accurate and specific to the symptoms described? (4 pts); fix quality — is each suggested fix concrete, actionable, and appropriate to the root cause? (4 pts); overall clarity and precision of the response (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          evalPrompt: 'You are a senior SDET evaluating automation anti-pattern analysis. The candidate may reference any framework or tool — do not penalise for framework choice. Score 0–10: correct root cause identification for each of the 3 problems — are the explanations technically accurate and specific to the symptoms described? (4 pts); fix quality — is each suggested fix concrete, actionable, and appropriate to the root cause? (4 pts); overall clarity and precision of the response (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         }
       ]
     },
