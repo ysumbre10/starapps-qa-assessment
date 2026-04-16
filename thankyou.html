@@ -52,7 +52,7 @@
         </div>
         <div class="marks-legend-item">
           <strong>Open Task</strong>
-          Scored 0–10 per task × 2 tasks = 20 max per domain
+          Scored 0–10 per task by our team
         </div>
         <div class="marks-legend-item">
           <strong>Manual Testing</strong>
@@ -63,8 +63,12 @@
           36 marks (8 MCQs + 2 open tasks)
         </div>
         <div class="marks-legend-item">
+          <strong>AI Prompting</strong>
+          40 marks (4 open tasks, no MCQs)
+        </div>
+        <div class="marks-legend-item">
           <strong>Grand Total</strong>
-          260 marks
+          300 marks
         </div>
       </div>
 
@@ -110,7 +114,7 @@
   /* ── Marks scheme ── */
   var MCQ_MARKS_PER_Q = 2;   // per correct MCQ answer
   var TASK_MARKS_MAX  = 10;  // scored 0-10 per task by our team
-  // Grand total (dynamic): 50 MCQs × 2 + 16 tasks × 10 = 100 + 160 = 260
+  // Grand total (dynamic): 50 MCQs × 2 + 20 tasks × 10 = 100 + 200 = 300
   var GRAND_MAX = DOMAINS.reduce(function (sum, d) {
     return sum + d.mcqs.length * MCQ_MARKS_PER_Q + d.tasks.length * TASK_MARKS_MAX;
   }, 0); // 260

@@ -18,7 +18,7 @@
  *   { candidateEmail: "...", scores: [{ domain, taskTitle, score, feedback }] }
  */
 
-const MAX_TASKS        = 20;    /* max tasks per submission (9 domains × ~2 tasks = 18 max) */
+const MAX_TASKS        = 25;    /* max tasks per submission (10 domains × up to 4 tasks = 20 max; headroom for future) */
 const MAX_ANSWER_LEN   = 8000;  /* max chars per answer — prevents prompt-stuffing          */
 const MODEL            = 'claude-haiku-4-5-20251001';
 

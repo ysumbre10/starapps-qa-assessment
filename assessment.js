@@ -260,52 +260,52 @@
       domain: 'DB Log Reading',
       mcqs: [
         {
-          q: 'A query is running slowly. EXPLAIN ANALYZE shows "Seq Scan" on a column that has an index. What is the most practical first action?',
+          q: 'A feature works correctly in testing but users report it is very slow in production. You find a "slow query" warning in the database logs. What is the most useful first step?',
           options: [
-            'Rebuild the index with REINDEX - it is likely corrupt',
-            'Confirm the index exists and that the query\'s WHERE clause actually references the indexed column',
-            'Increase the database server\'s RAM to allow more data to be cached in memory',
-            'Drop and recreate the index - the query planner may not have registered it yet',
+            'Mark the test as passed since the feature still works without throwing an error',
+            'Log a bug report with the slow query details, response time, and affected feature, and share it with the developer',
+            'Increase the test timeout so the warning no longer appears',
+            'Rerun the test several times to see if it gets faster on its own',
             'All of the above'
           ]
         },
         {
-          q: 'You see "deadlock detected" in production database logs. What is the correct first action?',
+          q: 'You see "deadlock detected" repeated in production database logs after a new feature release. As a QA engineer, what is the most useful first action?',
           options: [
-            'Increase the deadlock timeout to give transactions more time to resolve',
-            'Restart the database to clear all in-flight transactions',
-            'Identify which queries and tables are involved from the log, then fix the lock acquisition order in application code',
-            'Add a retry loop to the application so deadlocked transactions automatically recover without code changes',
+            'Increase the server timeout setting so the error stops appearing in logs',
+            'Note the error, identify which feature or user action triggers it, and raise a bug report with reproduction steps for the developer',
+            'Restart the database server to clear the stuck transactions',
+            'Ignore it since the system appears to have recovered on its own',
             'All of the above'
           ]
         },
         {
-          q: 'A query runs in 5 ms locally with 500 rows but 12,000 ms in production with 2 million rows. The production EXPLAIN output shows "Seq Scan". What is the most likely root cause?',
+          q: 'A feature works perfectly in your test environment with 100 records, but times out for users in production with 500,000 records. What is the most likely explanation?',
           options: [
-            'The production server has less RAM, causing slower disk reads',
-            'The query is doing a full table scan - there is likely a missing index on the column used in the WHERE clause',
-            'Production has a different database version with slower query processing',
-            'The query was cached locally, making it appear faster than it actually is',
+            'The test environment uses a different browser than production users',
+            'The database is scanning every row to find matching records — fast with 100 rows but very slow at scale, likely due to a missing index',
+            'The production server has a newer OS version that handles memory differently',
+            'The feature was not tested on a mobile device',
             'All of the above'
           ]
         },
         {
-          q: 'A production log shows: "lock wait timeout exceeded for UPDATE orders SET status=\'fulfilled\'". What does this indicate?',
+          q: 'A production log shows: "ERROR: lock wait timeout exceeded". In plain terms, what does this mean?',
           options: [
-            'The orders table has too many rows and the UPDATE timed out during a full scan',
-            'A long-running transaction is holding a row lock, blocking this UPDATE from acquiring it',
-            'The database does not support concurrent UPDATEs on the same table at this scale',
-            'The connection pool is exhausted, starving the UPDATE of an available slot',
+            'The database disk is full and no more data can be written',
+            'One database operation is waiting for another to finish before it can access the same data, and it waited too long',
+            'The database password has expired and the connection was rejected',
+            'The query contains a syntax error and could not be understood by the database',
             'All of the above'
           ]
         },
         {
-          q: 'A team runs ALTER TABLE orders ADD COLUMN notes TEXT NOT NULL DEFAULT \'none\' on a 20-million-row live table during business hours. It causes 47 minutes of write downtime. What is the correct explanation?',
+          q: 'A developer plans to make a structural change to a live production database table that has millions of rows, during peak business hours. What concern should a QA engineer raise?',
           options: [
-            'Adding a TEXT column always requires all data pages to be rebuilt regardless of database version',
-            'In older database versions, adding NOT NULL with a non-trivial DEFAULT requires a full table rewrite to populate the default on all existing rows, holding an exclusive lock throughout',
-            'The migration acquired a lock but removing NOT NULL would have allowed concurrent writes during the same operation',
-            'The DEFAULT value \'none\' triggered an edge case that caused the engine to retry the statement multiple times',
+            'Database changes only affect new data and will never impact existing users',
+            'Structural changes on large live tables can cause temporary slowness or errors for users while the change is being applied',
+            'This is only a concern if the change affects the login page',
+            'Database migrations always complete instantly regardless of table size',
             'All of the above'
           ]
         }
@@ -314,16 +314,16 @@
         {
           title: 'Read This Log and Tell a Story',
           scenario: '08:44:01 [INFO]  Job started: sync_orders\n08:44:03 [WARN]  Slow query 2,200ms - SELECT * FROM orders WHERE status=\'pending\'\n08:44:06 [ERROR] deadlock detected - tables: orders, line_items\n08:44:06 [ERROR] Transaction rolled back: sync_id=4421\n08:44:07 [INFO]  Retry 1/3 for sync_id=4421\n08:44:11 [ERROR] Max retries exhausted - sync_id=4421 → FAILED',
-          question: 'In plain English, explain what happened step by step.\nWhat is the most likely root cause?\nSuggest one specific fix for the developer.',
-          placeholder: 'What happened:\n...\n\nRoot cause:\n...\n\nFix:\n...',
-          evalPrompt: 'You are a senior QA engineer evaluating a log reading and analysis response. Score 0–10: narrative accuracy — does the candidate correctly sequence and explain what each log line indicates, connecting the slow query, deadlock, rollback, retry, and final failure in a coherent story? (3 pts); root cause plausibility — is the identified root cause consistent with the log evidence and technically sound? (4 pts); fix quality — is the suggested developer fix specific, actionable, and appropriate for the identified root cause? (3 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          question: 'In plain English, describe what happened step by step.\nWhat do you think went wrong?\nWhat information would you include in a bug report for the developer?',
+          placeholder: 'What happened:\n...\n\nWhat went wrong:\n...\n\nBug report details:\n...',
+          evalPrompt: 'You are a senior QA engineer evaluating a log reading response. Score 0–10: narrative accuracy — does the candidate correctly read and sequence the log lines, describing the slow query, error, rollback, retry, and final failure in a coherent story? (4 pts); problem identification — does the candidate reasonably identify what went wrong based on what the log shows, without requiring deep DBA knowledge? (3 pts); bug report quality — does the candidate include useful details such as error messages, timing, affected feature, and steps to reproduce? (3 pts). Reward clear thinking and good QA communication. Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         },
         {
-          title: 'Spot the Risky Migration',
-          scenario: 'A developer wants to run this on a live production database with 5 million rows during business hours:\n\nALTER TABLE orders ADD COLUMN source VARCHAR(50) NOT NULL DEFAULT \'web\';',
-          question: 'What is the main risk of running this migration on a live table?\nWhat would you check before approving it?\nHow would you suggest the developer run this more safely?',
-          placeholder: 'Main risk: ...\n\nWhat to check before approving: ...\n\nSafer approach: ...',
-          evalPrompt: 'You are a senior QA/DBA evaluating a migration review response. Score 0–10: risk identification — does the candidate correctly identify the primary danger of running this migration on a live, high-traffic table? (4 pts); checklist quality — are the pre-approval checks specific and relevant to understanding the real-world impact of this operation? (3 pts); safer migration approach — is the proposed alternative concrete, technically sound, and meaningfully safer than running the original statement directly? (3 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+          title: 'Review a Risky Database Change',
+          scenario: 'A developer says they need to make a database change on the live production system during business hours. The change adds a new required field to the orders table, which currently has 2 million rows. They plan to apply it directly to production without a maintenance window and without testing it first.',
+          question: 'What concerns would you raise before this change goes ahead?\nWhat questions would you ask the developer or team lead before approving it?\nHow would you suggest doing this more safely?',
+          placeholder: 'Concerns:\n...\n\nQuestions to ask:\n...\n\nSafer approach:\n...',
+          evalPrompt: 'You are a senior QA engineer evaluating a database change review response. Score 0–10: concern quality — does the candidate raise valid QA concerns such as user impact, risk of downtime, lack of testing, or no rollback plan? (4 pts); questions asked — are the questions sensible and focused on understanding the risk and impact before approving the change? (3 pts); safer approach — does the candidate suggest reasonable precautions such as testing in staging first, scheduling outside peak hours, or having a rollback plan? (3 pts). Reward practical QA thinking over deep database expertise. Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         }
       ]
     },
@@ -631,6 +631,7 @@
       id: 8,
       domain: 'QA Playground',
       playground: true,   /* signals split-screen renderer */
+      timerSecs: 1800,    /* 30 minutes */
       mcqs: [
         {
           q: 'You find "Smart Watch Pro" labeled "Out of Stock" on the Products page. What happens when you click its "Add to Cart" button?',
@@ -729,6 +730,44 @@
           evalPrompt: 'You are a senior QA engineer evaluating a bug report for a duplicate order issue (rapid double-click on Place Order). Score 0-10: clear and specific title (1 pt), accurate steps including the rapid double-click action (2 pts), correct expected vs actual distinction (1 pt), severity High or Critical with business justification such as data integrity or financial impact (2 pts), root cause mentioning debounce, idempotency key, button disable before async call, or race condition (2 pts), technically sound suggested fix (2 pts). Deduct for vague steps, wrong severity, or missing sections. Return JSON: {"score": N, "feedback": "2-3 sentence evaluation"}.'
         }
       ]
+    },
+
+    /* ── 9. AI PROMPTING ──────────────────────────────────────── */
+    {
+      id: 9,
+      domain: 'AI Prompting',
+      timerSecs: 1800,    /* 30 minutes */
+      mcqs: [],
+      tasks: [
+        {
+          title: 'Prompt for Test Case Generation',
+          scenario: 'You are testing a Password Reset feature. The rules are:\n- The email must belong to a registered account\n- The reset link expires after 15 minutes\n- The link can only be used once\n- The new password must be at least 8 characters',
+          question: 'Write the exact prompt you would give an AI tool to generate a comprehensive set of test cases for this feature.\n\nYour prompt should produce output that covers positive paths, negative paths, and edge cases.\n\nWrite the full prompt text — exactly as you would paste it into an AI tool.',
+          placeholder: 'Your prompt:\n...',
+          evalPrompt: 'You are a senior QA engineer evaluating an AI prompt written to generate test cases for a password reset feature. Score 0–10: context quality — does the prompt provide the feature rules and constraints clearly enough for AI to generate relevant tests without guessing? (3 pts); coverage intent — does the prompt explicitly ask for positive, negative, and edge case coverage rather than just "test cases"? (3 pts); output guidance — does the prompt specify an expected format, structure, or level of detail for the output? (2 pts); role/framing — does the prompt set a useful context such as giving AI a QA persona or specifying the purpose? (2 pts). Judge the quality of the prompt itself, not QA knowledge. Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+        },
+        {
+          title: 'Prompt to Improve a Vague Bug Report',
+          scenario: 'A junior QA on your team filed this bug report:\n\n"Title: Checkout is broken\nSteps: I clicked something and it didn\'t work.\nPriority: medium"\n\nYou want to use AI to help transform this into a professional, complete bug report.',
+          question: 'Write the prompt you would give an AI to improve this report.\n\nYour prompt should include the original vague report and instruct the AI to produce a complete, professional version with all the sections a good bug report needs.\n\nWrite the full prompt text.',
+          placeholder: 'Your prompt:\n...',
+          evalPrompt: 'You are a senior QA engineer evaluating an AI prompt written to improve a vague bug report. Score 0–10: does the prompt include the original vague report as input so the AI has something to work with? (2 pts); does the prompt clearly tell the AI what a complete bug report should contain — title, steps to reproduce, expected vs actual, severity, environment, etc.? (4 pts); output clarity — does the prompt ask for a specific, usable output rather than a general review? (2 pts); tone/instruction quality — is the prompt clear, specific, and well-structured? (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+        },
+        {
+          title: 'Prompt to Plan an Exploratory Testing Session',
+          scenario: 'You are about to spend 45 minutes exploratory-testing a new "Bulk CSV Import" feature in a CRM app. It lets users upload a CSV file to import up to 1,000 contacts at once. No test cases exist yet.',
+          question: 'Write the prompt you would give an AI to help you plan this exploratory testing session.\n\nYour prompt should get you a structured, actionable guide — covering what areas to test, what risks to look for, and what edge cases to prioritise in your 45 minutes.\n\nWrite the full prompt text.',
+          placeholder: 'Your prompt:\n...',
+          evalPrompt: 'You are a senior QA engineer evaluating an AI prompt written to plan a 45-minute exploratory testing session for a CSV import feature. Score 0–10: feature description — does the prompt give AI enough context about the feature (CSV, 1000 contacts, CRM, no existing test cases) to produce relevant suggestions? (3 pts); session framing — does the prompt mention the time constraint and ask for a structured, prioritised guide rather than a generic list? (3 pts); coverage breadth — does the prompt ask for risk areas, edge cases, or specific things to check, showing the candidate knows what good exploratory testing looks like? (2 pts); output format — does the prompt specify how the output should be structured so it is immediately usable? (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+        },
+        {
+          title: 'Prompt to Diagnose a Flaky Test',
+          scenario: 'A Playwright test has been flaky in CI for two weeks. It sometimes fails with:\n\n"element not found: [data-testid=\'submit-btn\']"\n\nbut passes every time locally. You have the test code and the CI error log and you want AI to help diagnose the cause and suggest a fix.',
+          question: 'Write the instruction part of the prompt you would give AI — what you tell it to do and how to respond.\n\nAssume you would paste the test code and error log directly after your instruction.\n\nWrite the full instruction text.',
+          placeholder: 'Your prompt:\n...',
+          evalPrompt: 'You are a senior QA engineer evaluating an AI prompt written to diagnose a flaky Playwright test. Score 0–10: problem framing — does the prompt clearly describe the symptom (element not found, CI only, passes locally) so the AI understands the context without needing to guess? (3 pts); asks for diagnosis — does the prompt explicitly ask the AI to identify possible causes rather than just "fix this"? (3 pts); asks for a fix — does the prompt ask for a concrete, actionable solution or code change? (2 pts); response structure — does the prompt ask AI to structure its response clearly, e.g. cause first then fix, or numbered steps? (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+        }
+      ]
     }
   ];
 
@@ -739,15 +778,16 @@
      Index: 0=A, 1=B, 2=C, 3=D, 4=E
      ───────────────────────────────────────────────────────────── */
   var _K = [
-    [242,  5, 23, 39, 54, 74, 88],        /* domain 0: Manual Testing        B,B,C,B,B,C,B         */
+    [242,  5, 23, 39, 54, 74, 88],         /* domain 0: Manual Testing        B,B,C,B,B,C,B         */
     [ 16, 33, 52, 71, 87],                 /* domain 1: API Testing            C,C,A,C,B             */
     [ 48, 64, 82,102,116],                 /* domain 2: Back-End Testing       B,C,B,C,B             */
-    [ 81, 99,115,130,149],                 /* domain 3: DB Log Reading         B,C,B,B,B             */
+    [ 81, 96,115,130,149],                 /* domain 3: DB Log Reading         B,B,B,B,B             */
     [110,130,147,163,179],                 /* domain 4: Test Automation        B,C,C,B,A             */
     [141,157,177,195,210],                 /* domain 5: Root Cause Analysis    D,C,B,C,A             */
     [172,191,205,225,240],                 /* domain 6: Complex Systems        B,B,C,B,B             */
     [206,223,239,253, 17],                 /* domain 7: AI in QA               C,C,B,C,B             */
-    [233,253, 14, 31, 46, 67, 83, 99]     /* domain 8: QA Playground          C,B,D,B,B,D,C,B       */
+    [233,253, 14, 31, 46, 67, 83, 99],     /* domain 8: QA Playground          C,B,D,B,B,D,C,B       */
+    []                                     /* domain 9: AI Prompting           no MCQs               */
   ];
 
   function _dec(di, mi) {
@@ -773,6 +813,9 @@
      ───────────────────────────────────────────────────────────── */
   var TOTAL_SECS = 600;
   var CIRC       = 2 * Math.PI * 26;
+
+  /* Returns the timer duration for the current domain (falls back to TOTAL_SECS) */
+  function _domSecs() { return (_D[_idx] && _D[_idx].timerSecs) || TOTAL_SECS; }
 
   var _idx         = 0;
   var _deadline    = 0;
@@ -884,6 +927,8 @@
     /* MCQs */
     var mcqEl = document.getElementById('mcqContainer');
     mcqEl.innerHTML = '';
+    document.getElementById('mcqSectionHeader').style.display =
+      domain.mcqs.length ? '' : 'none';
 
     domain.mcqs.forEach(function (mcq, qi) {
       var block = document.createElement('div');
@@ -954,6 +999,8 @@
     /* Tasks */
     var taskEl = document.getElementById('taskContainer');
     taskEl.innerHTML = '';
+    document.getElementById('taskSectionHeader').style.display =
+      domain.tasks.length ? '' : 'none';
 
     domain.tasks.forEach(function (task, ti) {
       var block = document.createElement('div');
@@ -983,7 +1030,11 @@
     });
 
     /* Submit button */
-    document.getElementById('submitBtn').onclick = function () { submitDomain(false); };
+    var _submitBtnEl = document.getElementById('submitBtn');
+    _submitBtnEl.onclick = function () { submitDomain(false); };
+    _submitBtnEl.innerHTML = (_idx >= _D.length - 1)
+      ? 'Submit Assessment'
+      : 'Submit &amp; Next Domain →';
 
     /* ── Resume or start timer ─────────────────────────────────────
        Persist the deadline in sessionStorage so the back-button
@@ -996,10 +1047,10 @@
     var _savedDeadline = parseInt(sessionStorage.getItem('qa_domain_deadline') || '0', 10);
     var _savedStart    = parseInt(sessionStorage.getItem('qa_domain_start')    || '0', 10);
 
-    /* Security: cap any resumed deadline to original domain start + TOTAL_SECS + 5s grace.
+    /* Security: cap any resumed deadline to original domain start + _domSecs() + 5s grace.
        Prevents DevTools attack: sessionStorage.setItem('qa_domain_deadline', 9999999999999) */
     if (_savedDeadline > 0 && _savedStart > 0) {
-      var _maxDeadline = _savedStart + (TOTAL_SECS + 5) * 1000;
+      var _maxDeadline = _savedStart + (_domSecs() + 5) * 1000;
       if (_savedDeadline > _maxDeadline) _savedDeadline = _maxDeadline;
     }
 
@@ -1010,7 +1061,7 @@
     }
 
     /* Auto-submit time label - use saved deadline if resuming */
-    var _labelDeadline = (_savedDeadline > _now()) ? _savedDeadline : (_now() + TOTAL_SECS * 1000);
+    var _labelDeadline = (_savedDeadline > _now()) ? _savedDeadline : (_now() + _domSecs() * 1000);
     var _autoTimeStr = new Date(_labelDeadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     document.getElementById('autoSubmitAt').textContent = _autoTimeStr;
 
@@ -1045,7 +1096,7 @@
     if (resumeDeadline && resumeDeadline > _now()) {
       _deadline = resumeDeadline;
     } else {
-      _deadline = _now() + TOTAL_SECS * 1000;
+      _deadline = _now() + _domSecs() * 1000;
       /* Store domain start timestamp so deadline extension exploit is capped on reload */
       sessionStorage.setItem('qa_domain_start', String(_now()));
     }
@@ -1092,7 +1143,7 @@
 
     el.textContent = pad(m) + ':' + pad(s);
 
-    var fraction = rem / TOTAL_SECS;
+    var fraction = rem / _domSecs();
     ring.style.strokeDasharray  = CIRC;
     ring.style.strokeDashoffset = CIRC * (1 - fraction);
 
@@ -1147,7 +1198,7 @@
     /* Grade MCQs -_dec returns the correct answer index (0=A … 4=E).
        _sel[qi] is an array of selected indices ([] = no answer).
        Correct only when exactly the one right option is chosen alone.   */
-    var mcqResults = domain.mcqs.map(function (mcq, qi) {
+    var mcqResults = domain.mcqs.map(function (_, qi) {
       var selArr  = _sel[qi];
       var corrIdx = _dec(_idx, qi);
       var isCorrect = selArr.length === 1 && selArr[0] === corrIdx;
@@ -1160,8 +1211,8 @@
       return el ? el.value.trim() : '';
     });
 
-    /* Speed-run flag */
-    var suspicious = timeUsed < 90;
+    /* Speed-run flag — flag if less than 15% of the allocated time was used */
+    var suspicious = timeUsed < Math.round(_domSecs() * 0.15);
 
     var key = 'domain_' + domain.id;
     _responses[key] = {
@@ -1217,7 +1268,6 @@
       teardownSplitMode();
       document.getElementById('autosubmitNotice').style.display = 'none';
       btn.disabled  = false;
-      btn.innerHTML = 'Submit &amp; Next Domain →';
       card.style.opacity = '1';
       renderDomain(_idx);
     }, 250);
@@ -1261,7 +1311,7 @@
       card.insertBefore(bar, card.firstChild);
 
       /* Set auto-submit time */
-      var labelDeadline = (_deadline > 0 && _deadline > _now()) ? _deadline : (_now() + TOTAL_SECS * 1000);
+      var labelDeadline = (_deadline > 0 && _deadline > _now()) ? _deadline : (_now() + _domSecs() * 1000);
       var atEl = document.getElementById('splitAutoTime');
       if (atEl) atEl.textContent = new Date(labelDeadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
@@ -1332,8 +1382,9 @@
       var resp = _responses[key] || {};
       flat[key + '_mcq_score']   = resp.mcqScore    || 0;
       flat[key + '_mcq_answers'] = JSON.stringify(resp.mcqResults || []);
-      flat[key + '_task_1']      = (resp.taskAnswers && resp.taskAnswers[0]) || '';
-      flat[key + '_task_2']      = (resp.taskAnswers && resp.taskAnswers[1]) || '';
+      d.tasks.forEach(function (_, ti) {
+        flat[key + '_task_' + (ti + 1)] = (resp.taskAnswers && resp.taskAnswers[ti]) || '';
+      });
       flat[key + '_time_secs']   = _timings[key + '_secs'] || 0;
       flat[key + '_suspicious']  = !!(resp.suspicious);
       totalMcq += resp.mcqScore || 0;

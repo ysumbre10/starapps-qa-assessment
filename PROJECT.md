@@ -1,6 +1,6 @@
 # QA Skill Check
 
-Browser-based QA assessment. 9 domains, 10 minutes each. Pure HTML + Vanilla JS — no build step, runs from any static host or `file://`.
+Browser-based QA assessment. 10 domains, 10 minutes each (30 min for QA Playground and AI Prompting). Pure HTML + Vanilla JS — no build step, runs from any static host or `file://`.
 
 ---
 
@@ -33,8 +33,9 @@ logo.png          Starapps Studio logo
 | 6 | Root Cause Analysis | 5 | 2 | 30 |
 | 7 | Complex Systems | 5 | 2 | 30 |
 | 8 | AI in QA | 5 | 2 | 30 |
-| 9 | QA Playground | 8 | 2 | 36 |
-| | **Total** | | | **260** |
+| 9 | QA Playground *(30 min)* | 8 | 2 | 36 |
+| 10 | AI Prompting *(30 min)* | 0 | 4 | 40 |
+| | **Total** | | | **300** |
 
 MCQ = 2 marks each. Open tasks = 0–10 each, reviewed by team.
 
@@ -47,8 +48,8 @@ MCQ = 2 marks each. Open tasks = 0–10 each, reviewed by team.
 3. **XOR answer key** — correct answers never in plain text
 4. **FNV-1a signature** — sessionStorage edits between domains detected and flagged
 5. **Domain lock** — submitted flag is signed; DevTools reset of `qa_current_task` cannot re-enter
-6. **Deadline cap** — `qa_domain_deadline` cannot be extended beyond `start + TOTAL_SECS + 5s`
-7. **Speed-run flag** — answers in under 90 s marked suspicious
+6. **Deadline cap** — `qa_domain_deadline` cannot be extended beyond `start + _domSecs() + 5s`
+7. **Speed-run flag** — answers in under 15% of the allocated domain time marked suspicious
 8. **Tab-switch counter** — `visibilitychange` events counted; warning shown at 3+
 9. **Shared secret token** — `qaToken` in `config.js` sent as `X-QA-Token` header to Worker and as `token` field to Sheets; both endpoints reject requests without a valid token — prevents spam/fake submissions from anyone who only knows the endpoint URL
 
@@ -66,7 +67,7 @@ thankyou.html     → reads sessionStorage, renders score breakdown
 
 ---
 
-## QA Playground (Domain 9)
+## QA Playground (Domain 9 — 30 min)
 
 Split-screen: left = questions, right = ShopLab iframe.
 
