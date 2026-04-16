@@ -16,6 +16,7 @@
   var _cfg             = (typeof window !== 'undefined' && window.QA_CONFIG) || {};
   var SHEETS_ENDPOINT  = _cfg.sheetsEndpoint  || '';
   var AI_EVAL_ENDPOINT = _cfg.aiEvalEndpoint  || '';
+  var QA_TOKEN         = _cfg.qaToken         || '';
 
   /* ── Freeze timing primitives before any user code can spoof them */
   var _Date = Date;
@@ -1341,11 +1342,13 @@
 
     var sheetsP = Promise.resolve();
     if (SHEETS_ENDPOINT) {
+      /* Include token in the body (no-cors mode blocks custom headers) */
+      var sheetsPayload = Object.assign({}, flat, { token: QA_TOKEN });
       sheetsP = fetch(SHEETS_ENDPOINT, {
         method:  'POST',
         mode:    'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(flat)
+        body:    JSON.stringify(sheetsPayload)
       }).catch(function (err) { console.error('Sheets submission failed:', err); });
     }
 
@@ -1365,9 +1368,13 @@
         });
       });
 
+      /* Include token as a request header for the Worker */
+      var workerHeaders = { 'Content-Type': 'application/json' };
+      if (QA_TOKEN) workerHeaders['X-QA-Token'] = QA_TOKEN;
+
       evalP = fetch(AI_EVAL_ENDPOINT, {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: workerHeaders,
         body:    JSON.stringify({ candidateEmail: _candidate.email, tasks: evalPayload })
       }).then(function (res) {
         if (res.ok) {

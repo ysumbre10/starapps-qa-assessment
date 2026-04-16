@@ -100,7 +100,7 @@
       warn.style.cssText = 'background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:14px;color:#991b1b;';
       var msgs = [];
       if (integrity.tampered)           msgs.push('Session data was modified during the assessment.');
-      if (integrity.tabSwitches >= 3)   msgs.push('Tab switched ' + integrity.tabSwitches + ' times during the assessment.');
+      if (integrity.tabSwitches >= 3)   msgs.push('Tab switched ' + parseInt(integrity.tabSwitches, 10) + ' times during the assessment.');
       warn.innerHTML = '<strong>Note:</strong> ' + msgs.join(' ') + ' These flags have been included in your submission.';
       var hero = document.querySelector('.thankyou-hero');
       if (hero) hero.after(warn);
@@ -110,10 +110,10 @@
   /* ── Marks scheme ── */
   var MCQ_MARKS_PER_Q = 2;   // per correct MCQ answer
   var TASK_MARKS_MAX  = 10;  // scored 0-10 per task by our team
-  // Grand total is dynamic: Manual Testing has 7 MCQs + 0 tasks; other domains 5 MCQs + 2 tasks
+  // Grand total (dynamic): 50 MCQs × 2 + 16 tasks × 10 = 100 + 160 = 260
   var GRAND_MAX = DOMAINS.reduce(function (sum, d) {
     return sum + d.mcqs.length * MCQ_MARKS_PER_Q + d.tasks.length * TASK_MARKS_MAX;
-  }, 0); // 224
+  }, 0); // 260
 
   /* ── Raw data ── */
   var responses = JSON.parse(sessionStorage.getItem('qa_responses') || '{}');

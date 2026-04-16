@@ -6,7 +6,6 @@ answers.md
 .claude/
 .agents/
 skills-lock.json
-tasks.json
 
 # ── OS artifacts ─────────────────────────────────────────────
 .DS_Store

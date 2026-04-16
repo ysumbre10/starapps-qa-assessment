@@ -4,16 +4,23 @@
  * Receives task answers from the assessment, calls Claude API to score them,
  * and returns scores back to the frontend.
  *
- * Environment variable required (set in Cloudflare dashboard):
- *   CLAUDE_API_KEY  →  your Anthropic API key (sk-ant-...)
+ * Environment variables (set as Cloudflare Worker secrets):
+ *   CLAUDE_API_KEY  →  Anthropic API key (sk-ant-...)
+ *   QA_TOKEN        →  Shared secret — must match qaToken in config.js
+ *                      Set with: wrangler secret put QA_TOKEN
  *
- * Expected request body:
- *   POST /eval
- *   { candidateEmail: "...", tasks: [{ domain, taskTitle, evalPrompt, answer }] }
+ * Expected request:
+ *   POST /
+ *   Headers: X-QA-Token: <token>
+ *   Body: { candidateEmail: "...", tasks: [{ domain, taskTitle, evalPrompt, answer }] }
  *
  * Response:
  *   { candidateEmail: "...", scores: [{ domain, taskTitle, score, feedback }] }
  */
+
+const MAX_TASKS        = 20;    /* max tasks per submission (9 domains × ~2 tasks = 18 max) */
+const MAX_ANSWER_LEN   = 8000;  /* max chars per answer — prevents prompt-stuffing          */
+const MODEL            = 'claude-haiku-4-5-20251001';
 
 export default {
   async fetch(request, env) {
@@ -23,8 +30,19 @@ export default {
       return cors('', 204);
     }
 
+    // ── Health check ──────────────────────────────────────────
+    if (request.method === 'GET') {
+      return cors(JSON.stringify({ status: 'ok', service: 'QA Eval Worker' }), 200);
+    }
+
     if (request.method !== 'POST') {
       return cors(JSON.stringify({ error: 'POST only' }), 405);
+    }
+
+    // ── Token gate — reject unknown callers ───────────────────
+    const token = request.headers.get('X-QA-Token') || '';
+    if (!env.QA_TOKEN || token !== env.QA_TOKEN) {
+      return cors(JSON.stringify({ error: 'Unauthorized' }), 401);
     }
 
     // ── Parse body ────────────────────────────────────────────
@@ -39,6 +57,11 @@ export default {
 
     if (!Array.isArray(tasks) || tasks.length === 0) {
       return cors(JSON.stringify({ error: 'tasks array required' }), 400);
+    }
+
+    // ── Input validation — prevent abuse ──────────────────────
+    if (tasks.length > MAX_TASKS) {
+      return cors(JSON.stringify({ error: 'Too many tasks' }), 400);
     }
 
     if (!env.CLAUDE_API_KEY) {
@@ -63,6 +86,9 @@ async function evaluate(task, apiKey) {
     return { domain, taskTitle, score: 0, feedback: 'No answer provided.' };
   }
 
+  // Truncate oversized answers — prevents token abuse
+  const safeAnswer = answer.trim().slice(0, MAX_ANSWER_LEN);
+
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method:  'POST',
@@ -72,12 +98,12 @@ async function evaluate(task, apiKey) {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model:      'claude-haiku-4-5-20251001',
+        model:      MODEL,
         max_tokens: 300,
         system:     evalPrompt,
         messages: [{
           role:    'user',
-          content: `Task: ${taskTitle}\n\nCandidate answer:\n${answer}`
+          content: `Task: ${taskTitle}\n\nCandidate answer:\n${safeAnswer}`
         }]
       })
     });
@@ -87,8 +113,8 @@ async function evaluate(task, apiKey) {
       return { domain, taskTitle, score: null, feedback: 'Evaluation unavailable.' };
     }
 
-    const data  = await res.json();
-    const text  = data.content?.[0]?.text || '';
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
 
     // Extract the JSON object Claude returns: { score: N, feedback: "..." }
     // Use lastIndexOf('}') so the match spans the full object even if the
@@ -120,10 +146,10 @@ function cors(body, status) {
   return new Response(body, {
     status,
     headers: {
-      'Content-Type':                'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods':'POST, OPTIONS',
-      'Access-Control-Allow-Headers':'Content-Type'
+      'Content-Type':                 'application/json',
+      'Access-Control-Allow-Origin':  '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, X-QA-Token'
     }
   });
 }

@@ -50,6 +50,7 @@ MCQ = 2 marks each. Open tasks = 0–10 each, reviewed by team.
 6. **Deadline cap** — `qa_domain_deadline` cannot be extended beyond `start + TOTAL_SECS + 5s`
 7. **Speed-run flag** — answers in under 90 s marked suspicious
 8. **Tab-switch counter** — `visibilitychange` events counted; warning shown at 3+
+9. **Shared secret token** — `qaToken` in `config.js` sent as `X-QA-Token` header to Worker and as `token` field to Sheets; both endpoints reject requests without a valid token — prevents spam/fake submissions from anyone who only knows the endpoint URL
 
 ---
 
@@ -115,12 +116,41 @@ Create `config.js` (gitignored) at the project root:
 
 ```js
 window.QA_CONFIG = {
-  sheetsEndpoint: 'https://...',  // Google Apps Script Web App URL
-  aiEvalEndpoint: 'https://',     // Cloudflare Worker URL
+  sheetsEndpoint: 'https://...',               // Google Apps Script Web App URL
+  aiEvalEndpoint: 'https://...',               // Cloudflare Worker URL
+  qaToken:        'qa-sk-...',                 // Shared secret (openssl rand -hex 20)
 };
 ```
 
 Without `config.js` the engine runs normally — submissions skip network calls.
+
+### Cloudflare Worker secrets
+
+```bash
+wrangler secret put CLAUDE_API_KEY   # Anthropic API key
+wrangler secret put QA_TOKEN         # Must match qaToken in config.js
+```
+
+### Google Apps Script token check
+
+The `doPost` function in the Apps Script must validate the token:
+
+```javascript
+function doPost(e) {
+  var TOKEN = 'qa-sk-85d653b918b6c164544780491a628b8a69cbbe00'; // keep in sync with config.js
+  try {
+    var data = JSON.parse(e.postData.contents);
+    if (data.token !== TOKEN) {
+      return ContentService.createTextOutput('Unauthorized').setMimeType(ContentService.MimeType.TEXT);
+    }
+    // ... rest of doPost (appendRow etc.)
+  } catch(err) {
+    return ContentService.createTextOutput('Error: ' + err).setMimeType(ContentService.MimeType.TEXT);
+  }
+}
+```
+
+After editing the Apps Script, create a **new deployment** (Deploy → New deployment) — editing does not update an existing deployment.
 
 ---
 
