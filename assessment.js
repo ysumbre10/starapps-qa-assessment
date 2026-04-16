@@ -1364,44 +1364,9 @@
 
   /* ── Submit all responses to Google Sheets + AI eval ─────── */
   function _submitAll() {
-    var flat = {
-      timestamp:     new Date().toISOString(),
-      fullName:      _candidate.fullName,
-      email:         _candidate.email,
-      experience:    _candidate.experience,
-      role:          _candidate.role,
-      totalMcqScore: 0,
-      totalDomains:  _D.length,
-      tampered:      _tampered,
-      tabSwitches:   _tabSwitches
-    };
 
-    var totalMcq = 0;
-    _D.forEach(function (d) {
-      var key  = 'domain_' + d.id;
-      var resp = _responses[key] || {};
-      flat[key + '_mcq_score']   = resp.mcqScore    || 0;
-      flat[key + '_mcq_answers'] = JSON.stringify(resp.mcqResults || []);
-      d.tasks.forEach(function (_, ti) {
-        flat[key + '_task_' + (ti + 1)] = (resp.taskAnswers && resp.taskAnswers[ti]) || '';
-      });
-      flat[key + '_time_secs']   = _timings[key + '_secs'] || 0;
-      flat[key + '_suspicious']  = !!(resp.suspicious);
-      totalMcq += resp.mcqScore || 0;
-    });
-    flat.totalMcqScore = totalMcq;
-
-    var sheetsP = Promise.resolve();
-    if (SHEETS_ENDPOINT) {
-      /* Include token in the body (no-cors mode blocks custom headers) */
-      var sheetsPayload = Object.assign({}, flat, { token: QA_TOKEN });
-      sheetsP = fetch(SHEETS_ENDPOINT, {
-        method:  'POST',
-        mode:    'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(sheetsPayload)
-      }).catch(function (err) { console.error('Sheets submission failed:', err); });
-    }
+    /* Step 1 — Run AI eval first so scores can be included in the Sheets row */
+    var aiScoreMap = {};  /* "domain::taskTitle" → { score, feedback } */
 
     var evalP = Promise.resolve();
     if (AI_EVAL_ENDPOINT) {
@@ -1419,28 +1384,89 @@
         });
       });
 
-      /* Include token as a request header for the Worker */
       var workerHeaders = { 'Content-Type': 'application/json' };
       if (QA_TOKEN) workerHeaders['X-QA-Token'] = QA_TOKEN;
 
-      evalP = fetch(AI_EVAL_ENDPOINT, {
-        method:  'POST',
-        headers: workerHeaders,
-        body:    JSON.stringify({ candidateEmail: _candidate.email, tasks: evalPayload })
-      }).then(function (res) {
-        if (res.ok) {
+      /* 20 s internal eval timeout — if it fires we still proceed to Sheets */
+      var evalTimeout = new Promise(function (resolve) { setTimeout(resolve, 20000); });
+
+      evalP = Promise.race([
+        fetch(AI_EVAL_ENDPOINT, {
+          method:  'POST',
+          headers: workerHeaders,
+          body:    JSON.stringify({ candidateEmail: _candidate.email, tasks: evalPayload })
+        }).then(function (res) {
+          if (!res.ok) return;
           return res.json().then(function (data) {
             sessionStorage.setItem('qa_ai_scores', JSON.stringify(data));
+            (data.scores || []).forEach(function (s) {
+              aiScoreMap[s.domain + '::' + s.taskTitle] = s;
+            });
           });
-        }
-      }).catch(function (err) { console.error('AI evaluation failed:', err); });
+        }).catch(function (err) { console.error('AI evaluation failed:', err); }),
+        evalTimeout
+      ]);
     }
 
-    /* Race against a 30-second timeout so the page never hangs on a dead network */
+    /* Step 2 — After eval resolves, build the full flat payload and send to Sheets */
     var timeoutP = new Promise(function (_, reject) {
       setTimeout(function () { reject(new Error('submission timeout')); }, 30000);
     });
-    return Promise.race([Promise.all([sheetsP, evalP]), timeoutP]);
+
+    var submitP = evalP.then(function () {
+      /* Build flat payload */
+      var flat = {
+        timestamp:     new Date().toISOString(),
+        fullName:      _candidate.fullName,
+        email:         _candidate.email,
+        experience:    _candidate.experience,
+        role:          _candidate.role,
+        totalDomains:  _D.length,
+        tampered:      _tampered,
+        tabSwitches:   _tabSwitches
+      };
+
+      var totalMcqScore  = 0;
+      var totalTaskScore = 0;
+
+      _D.forEach(function (d) {
+        var key  = 'domain_' + d.id;
+        var resp = _responses[key] || {};
+
+        /* MCQ */
+        flat[key + '_mcq_score']   = resp.mcqScore || 0;
+        flat[key + '_mcq_answers'] = JSON.stringify(resp.mcqResults || []);
+        totalMcqScore += resp.mcqScore || 0;
+
+        /* Tasks — answer text + AI score + AI feedback */
+        d.tasks.forEach(function (task, ti) {
+          var col     = key + '_task_' + (ti + 1);
+          var aiEntry = aiScoreMap[d.domain + '::' + task.title];
+          flat[col]              = (resp.taskAnswers && resp.taskAnswers[ti]) || '';
+          flat[col + '_score']   = (aiEntry && typeof aiEntry.score    === 'number') ? aiEntry.score    : '';
+          flat[col + '_feedback']= (aiEntry && typeof aiEntry.feedback === 'string') ? aiEntry.feedback : '';
+          if (aiEntry && typeof aiEntry.score === 'number') totalTaskScore += aiEntry.score;
+        });
+
+        flat[key + '_time_secs']  = _timings[key + '_secs'] || 0;
+        flat[key + '_suspicious'] = !!(resp.suspicious);
+      });
+
+      flat.totalMcqScore  = totalMcqScore;
+      flat.totalTaskScore = totalTaskScore;
+      flat.totalScore     = totalMcqScore * 2 + totalTaskScore; /* raw: MCQs ×2, tasks 0-10 each */
+
+      if (!SHEETS_ENDPOINT) return;
+      var sheetsPayload = Object.assign({}, flat, { token: QA_TOKEN });
+      return fetch(SHEETS_ENDPOINT, {
+        method:  'POST',
+        mode:    'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(sheetsPayload)
+      }).catch(function (err) { console.error('Sheets submission failed:', err); });
+    });
+
+    return Promise.race([submitP, timeoutP]);
   }
 
   /* ── Expose domain list for thankyou.html (metadata only — no question text or eval prompts) */
