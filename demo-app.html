@@ -31,10 +31,12 @@
     .sl-nav-btn:hover { color: var(--primary); }
     .sl-nav-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
     .cart-pill { background: var(--primary); color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; min-width: 18px; text-align: center; }
-    .sl-session { margin-left: auto; font-size: 11px; font-family: var(--mono); color: var(--text-3); flex-shrink: 0; }
+    .sl-session { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 11px; font-family: var(--mono); color: var(--text-3); flex-shrink: 0; }
     .session-val { font-weight: 600; color: var(--text-2); }
     .session-val.warn { color: var(--warning); }
     .session-val.dead { color: var(--danger); }
+    .session-renew-btn { display: none; padding: 3px 10px; font-size: 11px; font-family: var(--font); font-weight: 600; color: var(--primary); background: transparent; border: 1.5px solid var(--primary); border-radius: 4px; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
+    .session-renew-btn:hover { background: var(--primary); color: #fff; }
 
     /* ── Main ── */
     .sl-main { flex: 1; max-width: 960px; width: 100%; margin: 0 auto; padding: 20px 16px 100px; }
@@ -166,7 +168,10 @@
       <button class="sl-nav-btn" data-tab="orders" onclick="showTab('orders')">Orders</button>
       <button class="sl-nav-btn" data-tab="contact" onclick="showTab('contact')">Contact</button>
     </nav>
-    <div class="sl-session">Session: <span class="session-val" id="sessionClock">2:00</span></div>
+    <div class="sl-session">
+      Session: <span class="session-val" id="sessionClock">2:00</span>
+      <button class="session-renew-btn" id="sessionRenewBtn" onclick="resetSession()">Re-login</button>
+    </div>
   </div>
 </header>
 
@@ -294,14 +299,23 @@ var monOpen = false;
   var rem = Math.max(0, SESSION_MS - (Date.now() - sessionStart));
   var m = Math.floor(rem / 60000);
   var s = Math.floor((rem % 60000) / 1000);
-  var el = document.getElementById('sessionClock');
+  var el  = document.getElementById('sessionClock');
+  var btn = document.getElementById('sessionRenewBtn');
   if (el) {
-    el.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+    el.textContent = rem === 0 ? 'Expired' : m + ':' + (s < 10 ? '0' : '') + s;
     el.className = 'session-val' + (rem === 0 ? ' dead' : rem < 30000 ? ' dead' : rem < 60000 ? ' warn' : '');
-    if (rem === 0) el.textContent = 'Expired';
   }
+  /* Re-login button appears only after expiry so testers still hit the silent-401 bug first */
+  if (btn) btn.style.display = rem === 0 ? 'inline-block' : 'none';
   setTimeout(tick, 500);
 }());
+
+function resetSession() {
+  sessionStart = Date.now();
+  var btn = document.getElementById('sessionRenewBtn');
+  if (btn) btn.style.display = 'none';
+  toast('Session renewed. You are logged in again.');
+}
 
 /* ── Mock API ── */
 function mockAPI(method, endpoint, data) {
