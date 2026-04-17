@@ -31,6 +31,7 @@
     {
       id: 0,
       domain: 'Manual Testing',
+      timerSecs: 600,
       mcqs: [
         {
           q: 'A developer fixes a bug in the checkout discount calculation. Which testing activity confirms the fix did not break anything else?',
@@ -53,32 +54,87 @@
           ]
         },
         {
-          q: 'A bug is classified as Severity 1 (application crash) but Priority 3 (fix in a future sprint). Which scenario makes this valid?',
+          q: 'Which term describes testing that validates the entire application flow from the user interface through to the database, simulating a real-world use case from start to finish?',
           options: [
-            'It is never valid - a Severity 1 bug must always be Priority 1',
-            'The crash occurs only on a browser used by less than 0.1% of users, and fixing it now would delay a more critical deadline',
-            'The developer responsible is unavailable, so priority is automatically reduced',
-            'Severity and priority are the same attribute - this classification is a contradiction',
+            'Unit testing — tests a single isolated function or module',
+            'Integration testing — tests how two or more modules work together',
+            'End-to-end (E2E) testing — tests the complete workflow from UI to backend to database',
+            'Regression testing — re-runs tests after changes to catch new defects',
+            'All of the above'
+          ]
+        },
+        {
+          q: 'A field accepts ages 18–65. Using equivalence partitioning, which set of test values gives the best coverage?',
+          options: [
+            '18 and 65 — the boundary values only',
+            '10, 40, 70 — one value from each partition: below valid, within valid, above valid',
+            '18, 25, 35, 45, 55, 65 — many values spread across the valid range',
+            '0 and 100 — extreme values at either end of the range',
+            'All of the above'
+          ]
+        },
+        {
+          q: 'You are testing a text input that requires between 5 and 20 characters. Which set of values correctly represents boundary value testing?',
+          options: [
+            '1, 10, 25 — three values spread across the ranges',
+            '4, 5, 20, 21 — just below, at, and just above each boundary',
+            '0 and 50 — extreme values only',
+            '5, 10, 15, 20 — evenly spaced values within the valid range',
+            'All of the above'
+          ]
+        },
+        {
+          q: 'After a new build is deployed, a QA runs a quick set of core-function checks to decide whether the build is stable enough for full testing. This activity is called:',
+          options: [
+            'Sanity testing — checks whether a specific recent change works correctly',
+            'Regression testing — ensures that previously passing tests still pass after a change',
+            'Smoke testing — quickly validates basic functionality before deeper testing begins',
+            'Acceptance testing — confirms the software meets business requirements',
+            'All of the above'
+          ]
+        },
+        {
+          q: 'A tester finishes executing a test case and the actual result does not match the expected result. What is the correct next step?',
+          options: [
+            'Immediately rerun the test in case it was a one-off fluke',
+            'Log a defect report with the steps to reproduce, expected result, actual result, and supporting evidence such as screenshots',
+            'Notify the developer verbally and wait for a fix before logging anything',
+            'Mark the test as "blocked" and wait for a developer to investigate',
+            'All of the above'
+          ]
+        },
+        {
+          q: 'Exploratory testing is best described as:',
+          options: [
+            'Running a fixed set of pre-written test cases to validate documented requirements',
+            'Simultaneously designing and executing tests, using each finding to guide what to test next',
+            'Automated testing driven by risk analysis and historical defect data',
+            'Testing performed by end-users in a production-like environment',
+            'All of the above'
+          ]
+        },
+        {
+          q: 'A unit test passes for Module A and Module B independently. During integration testing, a defect is found when Module A calls Module B. What type of defect is most likely being exposed?',
+          options: [
+            'A logic error introduced during unit testing',
+            'A performance degradation caused by running two modules simultaneously',
+            'A contract or interface mismatch between the two modules, such as a wrong data type or unexpected response format',
+            'A database connection issue unrelated to either module',
+            'All of the above'
+          ]
+        },
+        {
+          q: 'A team achieves 95% code coverage but continues to receive critical production bugs. The most likely explanation is:',
+          options: [
+            'The tests are too slow and need to be parallelised to run more checks',
+            'High code coverage does not guarantee meaningful assertions — tests may execute code paths without verifying the output is correct',
+            'The CI/CD pipeline is skipping some tests before each deployment',
+            '95% coverage is too low — only 100% code coverage can prevent production bugs',
             'All of the above'
           ]
         }
       ],
-      tasks: [
-        {
-          title: 'Triage a Critical Bug',
-          scenario: 'A customer filed this complaint: "I added 3 items to my cart, clicked Pay, it said \'Payment Successful\'... but then I was taken back to an empty cart. I checked my email – no order confirmation. I checked my bank – £47.99 was charged. This happened 20 minutes ago."',
-          question: 'You are the first QA to see this report.\n1. Assign Severity and Priority (and justify each)\n2. List the 3 most important things to include in the bug report\n3. Name the first 2 people or teams you would notify immediately and explain why',
-          placeholder: '1. Severity: ... because ...\n   Priority: ... because ...\n\n2. Bug report must-haves:\n   - ...\n   - ...\n   - ...\n\n3. Notify:\n   - [Team/Person]: because ...\n   - [Team/Person]: because ...',
-          evalPrompt: 'You are a senior QA engineer evaluating a bug triage response for a payment-taken but order-lost scenario. Score 0–10: severity and priority assignment are reasonable with justified reasoning — Critical/High severity appropriate given financial impact (3 pts); bug report content is relevant and practical — steps, expected vs actual, and transaction details (3 pts); escalation decisions show understanding of stakeholder impact — dev team, payments team, or customer support are all valid first contacts (4 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
-        },
-        {
-          title: 'Write Test Cases for a Discount Code Feature',
-          scenario: 'A new feature allows users to apply a discount code at checkout.\nRules:\n- Code SAVE10 gives 10% off for all users\n- Code VIP20 gives 20% off for VIP users only; regular users see an error\n- A code can only be applied once per order\n- Codes are case-insensitive (save10 = SAVE10)',
-          question: 'Write 4 test cases for this feature.\nFor each test case include:\n- Test scenario (what you are testing)\n- Input / Action (what the user does)\n- Expected result',
-          placeholder: 'TC-01: Scenario: ...\n  Action: ...\n  Expected: ...\n\nTC-02: Scenario: ...\n  Action: ...\n  Expected: ...\n\nTC-03: Scenario: ...\n  Action: ...\n  Expected: ...\n\nTC-04: Scenario: ...\n  Action: ...\n  Expected: ...',
-          evalPrompt: 'You are a senior QA engineer evaluating test cases written for a discount code feature. Score 0–10: test case structure — does each test case have a clear scenario, action, and expected result? (3 pts); coverage quality — do the 4 test cases meaningfully cover different rules such as happy path, VIP restriction, single-use limit, and case-insensitivity? (5 pts); specificity — are expected results concrete rather than vague? (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
-        }
-      ]
+      tasks: []
     },
 
     /* ── 1. API TESTING ───────────────────────────────────────── */
@@ -580,7 +636,7 @@
      Index: 0=A, 1=B, 2=C, 3=D, 4=E
      ───────────────────────────────────────────────────────────── */
   var _K = [
-    [242,   5,  20],  /* domain 0: Manual Testing      B,B,B */
+    [242,   5,  23,  39,  54,  74,  88, 107, 121, 141],  /* domain 0: Manual Testing (10 MCQs) B,B,C,B,B,C,B,B,C,B */
     [ 16,  33,  53],  /* domain 1: API Testing          C,C,B */
     [ 51,  64,  82],  /* domain 2: Back-End Testing     C,C,B */
     [ 81,  96, 115],  /* domain 3: DB Log Reading       B,B,B */
@@ -873,66 +929,91 @@
     startTimer(_savedDeadline > _now() ? _savedDeadline : 0);
   }
 
-  /* ── Step renderer (MCQs → Task 1 → Task 2 within one domain timer) ── */
+  /* ── Step builder: returns ordered array of step descriptors ── */
+  function _getSteps(domain) {
+    var steps = [];
+    var n = domain.mcqs.length;
+    /* MCQs in chunks of 2 */
+    for (var i = 0; i < n; i += 2) {
+      steps.push({ type: 'mcqs', from: i, to: Math.min(i + 2, n) });
+    }
+    /* One task per step */
+    domain.tasks.forEach(function (t, ti) {
+      steps.push({ type: 'task', idx: ti });
+    });
+    return steps;
+  }
+
+  /* ── Step renderer: shows 2 MCQs per page, then 1 task per page ── */
   function _renderStep() {
     var domain = _D[_idx];
+    var steps  = _getSteps(domain);
+    var cur    = steps[_step];
     var mcqHdr = document.getElementById('mcqSectionHeader');
     var mcqEl  = document.getElementById('mcqContainer');
     var tskHdr = document.getElementById('taskSectionHeader');
     var taskEl = document.getElementById('taskContainer');
     var btn    = document.getElementById('submitBtn');
+    var isLast = (_step >= steps.length - 1);
 
-    var totalSteps = 1 + domain.tasks.length; /* step 0 = MCQs, steps 1..n = tasks */
-
-    if (_step === 0) {
-      /* Show MCQ section */
-      if (mcqHdr) mcqHdr.style.display = domain.mcqs.length ? '' : 'none';
-      if (mcqEl)  mcqEl.style.display  = domain.mcqs.length ? '' : 'none';
+    if (cur.type === 'mcqs') {
+      if (mcqHdr) mcqHdr.style.display = '';
+      if (mcqEl)  mcqEl.style.display  = '';
       if (tskHdr) tskHdr.style.display = 'none';
       if (taskEl) taskEl.style.display = 'none';
 
-      if (domain.tasks.length > 0) {
-        btn.innerHTML = 'Continue to Written Tasks &rarr;';
-        btn.disabled  = false;
-        btn.onclick   = function () { _advanceStep(); };
-      } else {
-        btn.innerHTML = (_idx >= _D.length - 1) ? 'Submit Assessment' : 'Submit &amp; Next Domain &rarr;';
-        btn.disabled  = false;
-        btn.onclick   = function () { submitDomain(false); };
+      /* Show only the mcq-blocks in this chunk */
+      var blocks = mcqEl.querySelectorAll('.mcq-block');
+      blocks.forEach(function (b, i) {
+        b.style.display = (i >= cur.from && i < cur.to) ? '' : 'none';
+      });
+
+      /* Update section sub-text with question range */
+      var mcqSub = mcqHdr ? mcqHdr.querySelector('.section-sub') : null;
+      if (mcqSub) {
+        if (domain.mcqs.length > 2) {
+          mcqSub.textContent = 'Questions ' + (cur.from + 1) + '\u2013' + cur.to + ' of ' + domain.mcqs.length + '. Select the best answer for each.';
+        } else {
+          mcqSub.textContent = 'Select the best answer for each question.';
+        }
       }
     } else {
-      /* Show one task at a time */
-      var taskIdx = _step - 1;
+      /* Task step */
       if (mcqHdr) mcqHdr.style.display = 'none';
       if (mcqEl)  mcqEl.style.display  = 'none';
       if (tskHdr) {
         tskHdr.style.display = '';
         var tTitle = tskHdr.querySelector('.section-title');
-        if (tTitle) tTitle.textContent = 'Written Task ' + _step + ' of ' + domain.tasks.length;
+        if (tTitle) tTitle.textContent = 'Written Task ' + (cur.idx + 1) + ' of ' + domain.tasks.length;
         var tSub = tskHdr.querySelector('.section-sub');
         if (tSub) tSub.textContent = 'Write your answer in the text area below.';
       }
       if (taskEl) {
         taskEl.style.display = '';
-        var blocks = taskEl.querySelectorAll('.task-block');
-        blocks.forEach(function (b, i) {
-          b.style.display = (i === taskIdx) ? '' : 'none';
+        var tblocks = taskEl.querySelectorAll('.task-block');
+        tblocks.forEach(function (b, i) {
+          b.style.display = (i === cur.idx) ? '' : 'none';
         });
-      }
-
-      var isLastStep = (_step >= domain.tasks.length);
-      if (isLastStep) {
-        btn.innerHTML = (_idx >= _D.length - 1) ? 'Submit Assessment' : 'Submit &amp; Next Domain &rarr;';
-        btn.disabled  = false;
-        btn.onclick   = function () { submitDomain(false); };
-      } else {
-        btn.innerHTML = 'Continue &rarr;';
-        btn.disabled  = false;
-        btn.onclick   = function () { _advanceStep(); };
       }
     }
 
-    /* Scroll to top of content */
+    /* Button */
+    if (isLast) {
+      btn.innerHTML = (_idx >= _D.length - 1) ? 'Submit Assessment' : 'Submit &amp; Next Domain &rarr;';
+      btn.disabled  = false;
+      btn.onclick   = function () { submitDomain(false); };
+    } else {
+      var nextStep = steps[_step + 1];
+      if (cur.type === 'mcqs' && nextStep && nextStep.type === 'task') {
+        btn.innerHTML = 'Continue to Written Tasks &rarr;';
+      } else {
+        btn.innerHTML = 'Continue &rarr;';
+      }
+      btn.disabled = false;
+      btn.onclick  = function () { _advanceStep(); };
+    }
+
+    /* Scroll to top */
     if (document.body.classList.contains('split-mode')) {
       var _card = document.getElementById('assessmentCard');
       if (_card) _card.scrollTop = 0;
