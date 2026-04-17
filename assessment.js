@@ -578,38 +578,7 @@
       id: 9,
       domain: 'AI Prompting',
       timerSecs: 1800,    /* 30 minutes */
-      mcqs: [
-        {
-          q: 'Which element of a prompt most directly controls whether an AI returns output in a specific format?',
-          options: [
-            'Setting a higher temperature so the model is more creative',
-            'Making the prompt longer to give more context',
-            'Explicitly stating the required format — e.g. "Return JSON: {score: N, feedback: \'...\'}"',
-            'Using a system prompt to set the AI persona',
-            'All of the above'
-          ]
-        },
-        {
-          q: 'A QA engineer prompts an AI: "Write test cases for the login page." The output contains only 5 happy-path cases. Which single change to the prompt would most improve coverage?',
-          options: [
-            'Adding "be thorough and comprehensive" to the prompt',
-            'Asking for more output with "write as many test cases as possible"',
-            'Specifying required coverage areas explicitly: "Include: (1) successful login, (2) wrong password, (3) locked account, (4) empty fields, (5) SQL injection"',
-            'Breaking it into two prompts: one for positive and one for negative cases',
-            'All of the above'
-          ]
-        },
-        {
-          q: 'An LLM-as-judge evaluator consistently scores verbose, formal-sounding responses higher than concise but technically correct ones. This is an example of:',
-          options: [
-            'Hallucination — the model is producing false quality signals',
-            'Prompt injection — a candidate has manipulated the system prompt',
-            'Evaluation bias — the model correlates surface style features with quality instead of correctness',
-            'Context overflow — long responses exceed the model\'s attention span',
-            'All of the above'
-          ]
-        }
-      ],
+      mcqs: [],
       tasks: [
         {
           title: 'Prompt for Test Case Generation',
@@ -617,6 +586,20 @@
           question: 'Write the exact prompt you would give an AI tool to generate a comprehensive set of test cases for this feature.\n\nYour prompt should produce output that covers positive paths, negative paths, and edge cases.\n\nWrite the full prompt text — exactly as you would paste it into an AI tool.',
           placeholder: 'Your prompt:\n...',
           evalPrompt: 'You are a senior QA engineer evaluating an AI prompt written to generate test cases for a password reset feature. Score 0–10: context quality — does the prompt provide the feature rules and constraints clearly enough for AI to generate relevant tests without guessing? (3 pts); coverage intent — does the prompt explicitly ask for positive, negative, and edge case coverage rather than just "test cases"? (3 pts); output guidance — does the prompt specify an expected format, structure, or level of detail for the output? (2 pts); role/framing — does the prompt set a useful context such as giving AI a QA persona or specifying the purpose? (2 pts). Judge the quality of the prompt itself, not QA knowledge. Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+        },
+        {
+          title: 'Prompt to Improve a Vague Bug Report',
+          scenario: 'A junior QA on your team filed this bug report:\n\n"Title: Checkout is broken\nSteps: I clicked something and it didn\'t work.\nPriority: medium"\n\nYou want to use AI to help transform this into a professional, complete bug report.',
+          question: 'Write the prompt you would give an AI to improve this report.\n\nYour prompt should include the original vague report and instruct the AI to produce a complete, professional version with all the sections a good bug report needs.\n\nWrite the full prompt text.',
+          placeholder: 'Your prompt:\n...',
+          evalPrompt: 'You are a senior QA engineer evaluating an AI prompt written to improve a vague bug report. Score 0–10: does the prompt include the original vague report as input so the AI has something to work with? (2 pts); does the prompt clearly tell the AI what a complete bug report should contain — title, steps to reproduce, expected vs actual, severity, environment, etc.? (4 pts); output clarity — does the prompt ask for a specific, usable output rather than a general review? (2 pts); tone/instruction quality — is the prompt clear, specific, and well-structured? (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+        },
+        {
+          title: 'Prompt to Plan an Exploratory Testing Session',
+          scenario: 'You are about to spend 45 minutes exploratory-testing a new "Bulk CSV Import" feature in a CRM app. It lets users upload a CSV file to import up to 1,000 contacts at once. No test cases exist yet.',
+          question: 'Write the prompt you would give an AI to help you plan this exploratory testing session.\n\nYour prompt should get you a structured, actionable guide — covering what areas to test, what risks to look for, and what edge cases to prioritise in your 45 minutes.\n\nWrite the full prompt text.',
+          placeholder: 'Your prompt:\n...',
+          evalPrompt: 'You are a senior QA engineer evaluating an AI prompt written to plan a 45-minute exploratory testing session for a CSV import feature. Score 0–10: feature description — does the prompt give AI enough context about the feature (CSV, 1000 contacts, CRM, no existing test cases) to produce relevant suggestions? (3 pts); session framing — does the prompt mention the time constraint and ask for a structured, prioritised guide rather than a generic list? (3 pts); coverage breadth — does the prompt ask for risk areas, edge cases, or specific things to check, showing the candidate knows what good exploratory testing looks like? (2 pts); output format — does the prompt specify how the output should be structured so it is immediately usable? (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         },
         {
           title: 'Prompt to Diagnose a Flaky Test',
@@ -645,7 +628,7 @@
     [172, 191, 206],  /* domain 6: Complex Systems      B,B,B */
     [205, 223, 239],  /* domain 7: AI in QA             B,C,B */
     [234, 253,  14],  /* domain 8: QA Playground        B,B,D */
-    [  8,  25,  46],  /* domain 9: AI Prompting         C,C,C */
+    [],               /* domain 9: AI Prompting         no MCQs */
   ];
 
   function _dec(di, mi) {
@@ -931,18 +914,8 @@
 
   /* ── Step builder: returns ordered array of step descriptors ── */
   function _getSteps(domain) {
-    var steps = [];
-    var n = domain.mcqs.length;
-    /* Manual Testing (10 MCQs, no tasks): paginate 2 per page */
-    if (n > 5) {
-      for (var i = 0; i < n; i += 2) {
-        steps.push({ type: 'mcqs', from: i, to: Math.min(i + 2, n) });
-      }
-      return steps;
-    }
-    /* All other domains: show everything (MCQs + tasks) on one page */
-    steps.push({ type: 'all' });
-    return steps;
+    /* All domains: show everything (MCQs + tasks) on one single page */
+    return [{ type: 'all' }];
   }
 
   /* ── Step renderer ─────────────────────────────────────────────

@@ -26,7 +26,42 @@
       <div class="thankyou-hero animate-in">
         <div class="check-circle">✓</div>
         <h1>Done.</h1>
-        <p>Your answers have been recorded. Our team will be in touch.</p>
+        <p>Answers recorded. MCQ scores are auto-graded. Open tasks are reviewed by our team.</p>
+      </div>
+
+      <div class="summary-grid animate-in delay-1">
+        <div class="summary-stat">
+          <div class="stat-num" id="statTotal">—</div>
+          <div class="stat-label">Score</div>
+        </div>
+        <div class="summary-stat">
+          <div class="stat-num" id="statDomains">—</div>
+          <div class="stat-label">Domains Done</div>
+        </div>
+        <div class="summary-stat">
+          <div class="stat-num" id="statAvgTime">—</div>
+          <div class="stat-label">Avg per Domain</div>
+        </div>
+      </div>
+
+      <!-- Marks key -->
+      <div class="marks-legend animate-in delay-2">
+        <div class="marks-legend-item">
+          <strong>MCQ</strong>
+          Auto-graded — each correct answer contributes to your score
+        </div>
+        <div class="marks-legend-item">
+          <strong>Open Task</strong>
+          Reviewed by our team and scored 0–10 per task
+        </div>
+        <div class="marks-legend-item">
+          <strong>Final Score</strong>
+          All raw marks normalized to a score out of 100
+        </div>
+      </div>
+
+      <div class="card animate-in delay-2" style="margin-bottom:16px;">
+        <div id="scoreBreakdown"></div>
       </div>
 
     </div>
@@ -44,9 +79,142 @@
 <script src="config.js"></script>
 <script src="assessment.js"></script>
 <script>
+  /* ── Guard ── */
   if (!sessionStorage.getItem('qa_candidate')) {
     window.location.href = 'index.html';
   }
+
+  /* ── Integrity warning ── */
+  try {
+    var integrity = JSON.parse(sessionStorage.getItem('qa_integrity') || '{}');
+    if (integrity.tampered || integrity.tabSwitches >= 3) {
+      var warn = document.createElement('div');
+      warn.style.cssText = 'background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:14px;color:#991b1b;';
+      var msgs = [];
+      if (integrity.tampered)           msgs.push('Session data was modified during the assessment.');
+      if (integrity.tabSwitches >= 3)   msgs.push('Tab switched ' + parseInt(integrity.tabSwitches, 10) + ' times during the assessment.');
+      warn.innerHTML = '<strong>Note:</strong> ' + msgs.join(' ') + ' These flags have been included in your submission.';
+      var hero = document.querySelector('.thankyou-hero');
+      if (hero) hero.after(warn);
+    }
+  } catch (e) {}
+
+  /* ── Marks scheme ── */
+  var MCQ_MARKS_PER_Q = 2;   /* per correct MCQ answer */
+  var TASK_MARKS_MAX  = 10;  /* scored 0-10 per task by our team */
+
+  /* Grand total raw — calculated from actual domain structure */
+  var GRAND_MAX = DOMAINS.reduce(function (sum, d) {
+    return sum + d.mcqs.length * MCQ_MARKS_PER_Q + d.tasks.length * TASK_MARKS_MAX;
+  }, 0);
+
+  /* ── Raw data ── */
+  var responses = JSON.parse(sessionStorage.getItem('qa_responses') || '{}');
+  var timings   = JSON.parse(sessionStorage.getItem('qa_timings')   || '{}');
+
+  /* ── Build AI score lookup: "Domain::Task Title" → { score, feedback } ── */
+  var aiMap = {};
+  try {
+    var aiRaw = sessionStorage.getItem('qa_ai_scores');
+    if (aiRaw) {
+      var aiData = JSON.parse(aiRaw);
+      (aiData.scores || []).forEach(function (s) {
+        aiMap[s.domain + '::' + s.taskTitle] = s;
+      });
+    }
+  } catch (e) {}
+
+  /* ── Totals ── */
+  var totalMcqMarks = 0, totalAiMarks = 0;
+  var domainsCompleted = 0, timingValues = [];
+  var aiTasksScored = 0, aiTasksExpected = 0;
+
+  DOMAINS.forEach(function (d) {
+    var resp = responses['domain_' + d.id];
+    if (resp) {
+      domainsCompleted++;
+      totalMcqMarks += (resp.mcqScore || 0) * MCQ_MARKS_PER_Q;
+      aiTasksExpected += d.tasks.length;
+      d.tasks.forEach(function (task) {
+        var ai = aiMap[d.domain + '::' + task.title];
+        if (ai && typeof ai.score === 'number') {
+          totalAiMarks += ai.score;
+          aiTasksScored++;
+        }
+      });
+    }
+    var t = timings['domain_' + d.id + '_secs'];
+    if (t) timingValues.push(t);
+  });
+
+  var totalMarks      = totalMcqMarks + totalAiMarks;
+  var allAiDone       = aiTasksScored === aiTasksExpected && aiTasksExpected > 0;
+  /* Normalize raw marks to /100 */
+  var normalizedScore = GRAND_MAX > 0 ? Math.round((totalMarks / GRAND_MAX) * 100) : 0;
+
+  /* ── Summary stats ── */
+  var avgSecs = timingValues.length
+    ? Math.round(timingValues.reduce(function (a, b) { return a + b; }, 0) / timingValues.length)
+    : 0;
+
+  document.getElementById('statTotal').textContent   = normalizedScore + (allAiDone ? '' : '+') + ' / 100';
+  document.getElementById('statDomains').textContent = domainsCompleted + ' / ' + DOMAINS.length;
+  document.getElementById('statAvgTime').textContent = Math.floor(avgSecs / 60) + 'm' + String(avgSecs % 60).padStart(2, '0') + 's';
+
+  /* ── Per-domain score breakdown ── */
+  var el = document.getElementById('scoreBreakdown');
+
+  DOMAINS.forEach(function (d) {
+    var resp = responses['domain_' + d.id];
+    var row  = document.createElement('div');
+    row.className = 'score-row';
+
+    if (!resp) {
+      row.innerHTML =
+        '<div class="score-domain">' + d.domain + '</div>' +
+        '<div class="score-badges"><span class="ai-pending">Not attempted</span></div>';
+      el.appendChild(row);
+      return;
+    }
+
+    var domainMcqMax = d.mcqs.length * MCQ_MARKS_PER_Q;
+    var domainMax    = domainMcqMax + d.tasks.length * TASK_MARKS_MAX;
+
+    /* MCQ marks */
+    var mcqScore   = resp.mcqScore || 0;
+    var mcqMarks   = mcqScore * MCQ_MARKS_PER_Q;
+    var mcqBadge   = d.mcqs.length > 0
+      ? '<span class="mcq-score-badge' + (mcqScore === d.mcqs.length ? ' perfect' : '') + '">MCQ ' + mcqMarks + '/' + domainMcqMax + '</span>'
+      : '';
+
+    /* Task marks */
+    var taskBadges   = '';
+    var domainTotal  = mcqMarks;
+    var allTasksDone = true;
+
+    d.tasks.forEach(function (task, ti) {
+      var ai = aiMap[d.domain + '::' + task.title];
+      if (ai && typeof ai.score === 'number') {
+        var cls = ai.score >= 8 ? ' high' : (ai.score < 5 ? ' low' : '');
+        taskBadges += '<span class="task-mark-badge' + cls + '">T' + (ti + 1) + ': ' + ai.score + '/10</span>';
+        domainTotal += ai.score;
+      } else if (d.tasks.length > 0) {
+        taskBadges  += '<span class="score-pending">T' + (ti + 1) + ': —/10</span>';
+        allTasksDone = false;
+      }
+    });
+
+    /* Domain total */
+    var totalStr   = allTasksDone ? domainTotal + '/' + domainMax : domainTotal + '+/' + domainMax;
+    var totalCls   = (allTasksDone && domainTotal === domainMax) ? ' perfect' : '';
+    var totalBadge = '<span class="domain-total-badge' + totalCls + '">' + totalStr + '</span>';
+
+    row.innerHTML =
+      '<div class="score-domain">' + d.domain + '</div>' +
+      '<div class="score-badges">' + mcqBadge + taskBadges + totalBadge + '</div>';
+
+    el.appendChild(row);
+  });
 </script>
 
 </body>
