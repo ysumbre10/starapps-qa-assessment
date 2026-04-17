@@ -1425,6 +1425,8 @@
       flat.totalMcqScore  = totalMcqScore;
       flat.totalTaskScore = totalTaskScore;
       flat.totalScore     = totalMcqScore * 2 + totalTaskScore; /* raw: MCQs ×2, tasks 0-10 each */
+      var _grandMax = _D.reduce(function (s, d) { return s + d.mcqs.length * 2 + d.tasks.length * 10; }, 0);
+      flat.scoreOutOf100  = _grandMax > 0 ? Math.round((flat.totalScore / _grandMax) * 100) : 0;
 
       if (!SHEETS_ENDPOINT) return;
       var sheetsPayload = Object.assign({}, flat, { token: QA_TOKEN });
