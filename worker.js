@@ -71,8 +71,14 @@ export default {
     }
 
     // ── Evaluate all tasks in parallel ────────────────────────
-    const scores = await Promise.all(
+    // Promise.allSettled ensures one failed eval doesn't discard all others
+    const results = await Promise.allSettled(
       tasks.map(task => evaluate(task, env.CLAUDE_API_KEY))
+    );
+    const scores = results.map(r =>
+      r.status === 'fulfilled'
+        ? r.value
+        : { domain: '', taskTitle: '', score: null, feedback: 'Evaluation error.' }
     );
 
     return cors(JSON.stringify({ candidateEmail, scores }), 200);

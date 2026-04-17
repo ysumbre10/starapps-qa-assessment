@@ -161,6 +161,13 @@ var FIELD_ORDER = [
 function doPost(e) {
   var TOKEN = 'YOUR_QA_TOKEN_HERE';
   try {
+    /* Guard: catch accidental schema drift before writing a maligned row */
+    if (HEADERS.length !== FIELD_ORDER.length) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ status: 'error', message: 'Schema mismatch: HEADERS(' + HEADERS.length + ') vs FIELD_ORDER(' + FIELD_ORDER.length + ')' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     var data = JSON.parse(e.postData.contents);
 
     if (data.token !== TOKEN) {

@@ -808,7 +808,8 @@
         lbl.className = 'mcq-option';
 
         var cb    = document.createElement('input');
-        cb.type   = 'checkbox';
+        cb.type   = 'radio';
+        cb.name   = 'mcq_' + qi;  /* group all options for this question — browser enforces single-select */
         cb.value  = oi;
 
         var chkBox = document.createElement('span');
@@ -829,28 +830,18 @@
 
         cb.addEventListener('change', (function (capturedQi, capturedOi, capturedLbl, capturedOpts) {
           return function () {
+            /* Radio inputs: browser already unchecks siblings — just sync visual state */
+            capturedOpts.querySelectorAll('label.mcq-option').forEach(function (l) {
+              l.classList.remove('selected');
+              var m = l.querySelector('.mcq-marker');
+              if (m) { m.style.background = ''; m.style.color = ''; }
+            });
+            _sel[capturedQi] = [capturedOi];
+            capturedLbl.classList.add('selected');
             var selMarker = capturedLbl.querySelector('.mcq-marker');
-            if (this.checked) {
-              /* FIX ISSUE-06: enforce single-select — uncheck all other options in this question */
-              capturedOpts.querySelectorAll('input[type="checkbox"]').forEach(function (other) {
-                if (other !== capturedLbl.querySelector('input') && other.checked) {
-                  other.checked = false;
-                  var otherLbl    = other.parentNode;
-                  var otherMarker = otherLbl.querySelector('.mcq-marker');
-                  otherLbl.classList.remove('selected');
-                  if (otherMarker) { otherMarker.style.background = ''; otherMarker.style.color = ''; }
-                }
-              });
-              _sel[capturedQi] = [capturedOi]; /* replace array — only this answer selected */
-              capturedLbl.classList.add('selected');
-              if (selMarker) {
-                selMarker.style.background = 'var(--white)';
-                selMarker.style.color = 'var(--text-inv)';
-              }
-            } else {
-              _sel[capturedQi] = []; /* deselect clears the selection */
-              capturedLbl.classList.remove('selected');
-              if (selMarker) { selMarker.style.background = ''; selMarker.style.color = ''; }
+            if (selMarker) {
+              selMarker.style.background = 'var(--white)';
+              selMarker.style.color = 'var(--text-inv)';
             }
           };
         })(qi, oi, lbl, opts));
@@ -916,8 +907,9 @@
     }
 
     if (_savedDeadline > 0 && _savedDeadline <= _now()) {
-      /* Case (c): expired while away - submit with whatever was entered */
-      submitDomain(true);
+      /* Case (c): expired while away - brief notice then auto-submit */
+      showFlash('Time expired. Auto-submitting your work\u2026');
+      setTimeout(function () { submitDomain(true); }, 1200);
       return;
     }
 
@@ -1276,8 +1268,8 @@
         '<div>' +
           '<div class="split-timer-label">Time Remaining</div>' +
         '</div>' +
-        /* FIX ISSUE-03: was hardcoded 10:00; initialise to actual domain duration to avoid flicker */
-        '<div class="split-timer-val" id="splitTimerVal">' + pad(Math.floor(_domSecs() / 60)) + ':' + pad(_domSecs() % 60) + '</div>' +
+        /* Initialised to --:-- ; updateTimer() fills in correct remaining time on first 500ms tick */
+        '<div class="split-timer-val" id="splitTimerVal">--:--</div>' +
         '<div class="split-auto-at" id="splitAutoAt"><div class="split-timer-label">Auto-submits</div><strong id="splitAutoTime">-</strong></div>';
       card.insertBefore(bar, card.firstChild);
 
@@ -1442,7 +1434,15 @@
       var _grandMax = _D.reduce(function (s, d) { return s + d.mcqs.length * 2 + d.tasks.length * 10; }, 0);
       flat.scoreOutOf100  = _grandMax > 0 ? Math.round((flat.totalScore / _grandMax) * 100) : 0;
 
-      if (!SHEETS_ENDPOINT) return;
+      if (!SHEETS_ENDPOINT) {
+        /* On a hosted origin (not localhost/file), missing config means answers will be lost.
+           Log prominently so the assessor can diagnose the misconfiguration. */
+        var _origin = (typeof location !== 'undefined') ? location.protocol + location.hostname : '';
+        if (_origin && _origin !== 'file:' && _origin.indexOf('localhost') === -1 && _origin.indexOf('127.0.0.1') === -1) {
+          console.error('[QA] CRITICAL: SHEETS_ENDPOINT is not configured. Candidate submission will NOT be saved. Check that config.js is deployed and QA_CONFIG.sheetsEndpoint is set.');
+        }
+        return;
+      }
       var sheetsPayload = Object.assign({}, flat, { token: QA_TOKEN });
       return fetch(SHEETS_ENDPOINT, {
         method:  'POST',
