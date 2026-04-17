@@ -66,8 +66,11 @@
   var raw = sessionStorage.getItem('qa_candidate');
   if (!raw) { window.location.href = 'index.html'; }
   else {
-    var c = JSON.parse(raw);
-    document.getElementById('candidateName').textContent = c.fullName + ' · ' + c.email;
+    /* FIX ISSUE-01: JSON.parse was uncaught; corrupt sessionStorage caused blank page */
+    try {
+      var c = JSON.parse(raw);
+      document.getElementById('candidateName').textContent = c.fullName + ' · ' + c.email;
+    } catch (e) { window.location.href = 'index.html'; }
   }
 
   /* Update button label if resuming a partially-completed assessment */

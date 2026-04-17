@@ -20,6 +20,8 @@
 
 const MAX_TASKS        = 25;    /* max tasks per submission (10 domains × up to 4 tasks = 20 max; headroom for future) */
 const MAX_ANSWER_LEN   = 8000;  /* max chars per answer — prevents prompt-stuffing          */
+/* FIX ISSUE-09: cap evalPrompt length to prevent token abuse via crafted requests */
+const MAX_EVAL_PROMPT_LEN = 4000;
 const MODEL            = 'claude-haiku-4-5-20251001';
 
 export default {
@@ -81,6 +83,11 @@ export default {
 async function evaluate(task, apiKey) {
   const { domain, taskTitle, evalPrompt, answer } = task;
 
+  // FIX ISSUE-08: guard against missing evalPrompt/taskTitle — avoids sending null system prompt to Claude
+  if (!evalPrompt || !taskTitle) {
+    return { domain, taskTitle, score: null, feedback: 'Invalid task definition.' };
+  }
+
   // Skip if no meaningful answer given
   if (!answer || answer.trim().length < 15) {
     return { domain, taskTitle, score: 0, feedback: 'No answer provided.' };
@@ -88,6 +95,9 @@ async function evaluate(task, apiKey) {
 
   // Truncate oversized answers — prevents token abuse
   const safeAnswer = answer.trim().slice(0, MAX_ANSWER_LEN);
+
+  // FIX ISSUE-09: truncate evalPrompt to cap token use from crafted requests
+  const safePrompt = evalPrompt.slice(0, MAX_EVAL_PROMPT_LEN);
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -100,7 +110,7 @@ async function evaluate(task, apiKey) {
       body: JSON.stringify({
         model:      MODEL,
         max_tokens: 300,
-        system:     evalPrompt,
+        system:     safePrompt,
         messages: [{
           role:    'user',
           content: `Task: ${taskTitle}\n\nCandidate answer:\n${safeAnswer}`
@@ -124,10 +134,12 @@ async function evaluate(task, apiKey) {
     if (start !== -1 && end > start) {
       try {
         const parsed = JSON.parse(text.slice(start, end + 1));
+        // FIX ISSUE-07: clamp score to [0,10] — Claude may return out-of-range values
+        const rawScore = typeof parsed.score === 'number' ? parsed.score : null;
         return {
           domain,
           taskTitle,
-          score:    typeof parsed.score    === 'number' ? parsed.score    : null,
+          score:    rawScore !== null ? Math.min(10, Math.max(0, rawScore)) : null,
           feedback: typeof parsed.feedback === 'string' ? parsed.feedback : text
         };
       } catch { /* fall through */ }

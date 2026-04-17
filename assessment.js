@@ -813,25 +813,33 @@
         lbl.appendChild(span);
         opts.appendChild(lbl);
 
-        cb.addEventListener('change', (function (capturedQi, capturedOi, capturedLbl) {
+        cb.addEventListener('change', (function (capturedQi, capturedOi, capturedLbl, capturedOpts) {
           return function () {
-            var arr       = _sel[capturedQi];
-            var pos       = arr.indexOf(capturedOi);
             var selMarker = capturedLbl.querySelector('.mcq-marker');
             if (this.checked) {
-              if (pos === -1) arr.push(capturedOi);
+              /* FIX ISSUE-06: enforce single-select — uncheck all other options in this question */
+              capturedOpts.querySelectorAll('input[type="checkbox"]').forEach(function (other) {
+                if (other !== capturedLbl.querySelector('input') && other.checked) {
+                  other.checked = false;
+                  var otherLbl    = other.parentNode;
+                  var otherMarker = otherLbl.querySelector('.mcq-marker');
+                  otherLbl.classList.remove('selected');
+                  if (otherMarker) { otherMarker.style.background = ''; otherMarker.style.color = ''; }
+                }
+              });
+              _sel[capturedQi] = [capturedOi]; /* replace array — only this answer selected */
               capturedLbl.classList.add('selected');
               if (selMarker) {
                 selMarker.style.background = 'var(--white)';
                 selMarker.style.color = 'var(--text-inv)';
               }
             } else {
-              if (pos > -1) arr.splice(pos, 1);
+              _sel[capturedQi] = []; /* deselect clears the selection */
               capturedLbl.classList.remove('selected');
               if (selMarker) { selMarker.style.background = ''; selMarker.style.color = ''; }
             }
           };
-        })(qi, oi, lbl));
+        })(qi, oi, lbl, opts));
       });
 
       block.appendChild(qnum);
@@ -1055,7 +1063,9 @@
 
       if (rem <= 120 && !_warnShown) {
         _warnShown = true;
-        document.getElementById('autosubmitNotice').style.display = 'flex';
+        /* FIX ISSUE-10: null-guard prevents TypeError if element absent (defensive, matches other guards) */
+        var _an = document.getElementById('autosubmitNotice');
+        if (_an) _an.style.display = 'flex';
       }
 
       if (rem <= 0) {
@@ -1204,15 +1214,17 @@
 
     /* Fade transition */
     var card = document.getElementById('assessmentCard');
-    card.style.transition = 'opacity 0.2s';
-    card.style.opacity    = '0';
+    /* FIX ISSUE-02: null-guard card before property access; missing check caused TypeError if DOM absent */
+    if (card) { card.style.transition = 'opacity 0.2s'; card.style.opacity = '0'; }
 
     setTimeout(function () {
       teardownSplitMode();
-      document.getElementById('autosubmitNotice').style.display = 'none';
+      /* FIX ISSUE-10: null-guard autosubmitNotice; missing check left _submitting=true on DOM absence */
+      var _notice = document.getElementById('autosubmitNotice');
+      if (_notice) _notice.style.display = 'none';
       btn.disabled   = false;
       _submitting    = false;   /* unlock for next domain's submit */
-      card.style.opacity = '1';
+      if (card) card.style.opacity = '1';
       renderDomain(_idx);
     }, 250);
   }
@@ -1250,7 +1262,8 @@
         '<div>' +
           '<div class="split-timer-label">Time Remaining</div>' +
         '</div>' +
-        '<div class="split-timer-val" id="splitTimerVal">10:00</div>' +
+        /* FIX ISSUE-03: was hardcoded 10:00; initialise to actual domain duration to avoid flicker */
+        '<div class="split-timer-val" id="splitTimerVal">' + pad(Math.floor(_domSecs() / 60)) + ':' + pad(_domSecs() % 60) + '</div>' +
         '<div class="split-auto-at" id="splitAutoAt"><div class="split-timer-label">Auto-submits</div><strong id="splitAutoTime">-</strong></div>';
       card.insertBefore(bar, card.firstChild);
 
@@ -1298,10 +1311,23 @@
   }
 
   function showFlash(msg) {
+    /* FIX ISSUE-05: replaced innerHTML concat with safe DOM construction to eliminate XSS surface */
     var banner = document.createElement('div');
     banner.className = 'notice notice-danger';
     banner.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;max-width:400px;width:90%;';
-    banner.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/></svg> <span>' + msg + '</span>';
+    var svgNS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', '14'); svg.setAttribute('height', '14');
+    svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor'); svg.setAttribute('stroke-width', '2');
+    svg.style.flexShrink = '0';
+    var circle = document.createElementNS(svgNS, 'circle');
+    circle.setAttribute('cx', '12'); circle.setAttribute('cy', '12'); circle.setAttribute('r', '10');
+    svg.appendChild(circle);
+    var span = document.createElement('span');
+    span.textContent = msg; /* textContent — never treats msg as HTML */
+    banner.appendChild(svg);
+    banner.appendChild(span);
     document.body.appendChild(banner);
     setTimeout(function () { banner.remove(); }, 3500);
   }

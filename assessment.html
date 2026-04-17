@@ -40,7 +40,8 @@
       <div class="sticky-timer-inner">
         <span class="sticky-domain-label" id="stickyDomain"></span>
         <div class="sticky-timer-right">
-          <span class="sticky-timer-display" id="stickyTimerDisplay">10:00</span>
+          <!-- FIX ISSUE-03: was hardcoded 10:00; shows wrong value for 30-min domains until first tick -->
+          <span class="sticky-timer-display" id="stickyTimerDisplay">--:--</span>
           <span class="sticky-timer-unit">left</span>
         </div>
       </div>
@@ -54,7 +55,8 @@
       <div class="timer-wrap">
         <div style="text-align:center;">
           <div class="timer-label">Time Remaining</div>
-          <div class="timer-display" id="timerDisplay">10:00</div>
+          <!-- FIX ISSUE-03: was hardcoded 10:00; shows wrong value for 30-min domains until first tick -->
+          <div class="timer-display" id="timerDisplay">--:--</div>
         </div>
         <div class="timer-ring">
           <svg viewBox="0 0 60 60" width="60" height="60">

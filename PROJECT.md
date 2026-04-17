@@ -23,19 +23,20 @@ logo.png          Starapps Studio logo
 
 ## Domains
 
+<!-- FIX ISSUE-11: corrected MCQ counts and GRAND_MAX to match actual code (were stale: 7/5/5/5/5/5/5/5/8 MCQs, total 300) -->
 | # | Domain | MCQs | Tasks | Max |
 |---|--------|------|-------|-----|
-| 1 | Manual Testing | 7 | 0 | 14 |
-| 2 | API Testing | 5 | 2 | 30 |
-| 3 | Back-End Testing | 5 | 2 | 30 |
-| 4 | DB Log Reading | 5 | 2 | 30 |
-| 5 | Test Automation | 5 | 2 | 30 |
-| 6 | Root Cause Analysis | 5 | 2 | 30 |
-| 7 | Complex Systems | 5 | 2 | 30 |
-| 8 | AI in QA | 5 | 2 | 30 |
-| 9 | QA Playground *(30 min)* | 8 | 2 | 36 |
+| 1 | Manual Testing | 10 | 0 | 20 |
+| 2 | API Testing | 3 | 2 | 26 |
+| 3 | Back-End Testing | 3 | 2 | 26 |
+| 4 | DB Log Reading | 3 | 2 | 26 |
+| 5 | Test Automation | 3 | 2 | 26 |
+| 6 | Root Cause Analysis | 3 | 2 | 26 |
+| 7 | Complex Systems | 3 | 2 | 26 |
+| 8 | AI in QA | 3 | 2 | 26 |
+| 9 | QA Playground *(30 min)* | 3 | 2 | 26 |
 | 10 | AI Prompting *(30 min)* | 0 | 4 | 40 |
-| | **Total** | | | **300** |
+| | **Total** | | | **268** |
 
 MCQ = 2 marks each. Open tasks = 0–10 each, reviewed by team.
 
