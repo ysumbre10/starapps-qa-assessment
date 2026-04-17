@@ -17,7 +17,7 @@
 
 var SHEET_NAME = 'Submissions';
 
-// Column headers — must stay in sync with FIELD_ORDER below (110 columns total)
+// Column headers — must stay in sync with FIELD_ORDER below (116 columns total)
 var HEADERS = [
   // ── Candidate (5) ──────────────────────────────────────────────
   'Timestamp', 'Full Name', 'Email', 'Experience', 'Role',
@@ -71,10 +71,12 @@ var HEADERS = [
   'AIQA – Task 2', 'AIQA – T2 AI Score', 'AIQA – T2 AI Feedback',
   'AIQA – Time (s)', 'AIQA – Suspicious?',
 
-  // ── Domain 8 : QA Playground · 30 min (10) ─────────────────────
+  // ── Domain 8 : QA Playground · 30 min (16) ─────────────────────
   'PG – MCQ Score', 'PG – MCQ Detail (JSON)',
-  'PG – Task 1 (Bug Hunt)', 'PG – T1 AI Score', 'PG – T1 AI Feedback',
-  'PG – Task 2 (Bug Report)', 'PG – T2 AI Score', 'PG – T2 AI Feedback',
+  'PG – Task 1 (UI Bugs)', 'PG – T1 AI Score', 'PG – T1 AI Feedback',
+  'PG – Task 2 (API Bugs)', 'PG – T2 AI Score', 'PG – T2 AI Feedback',
+  'PG – Task 3 (Functional Bugs)', 'PG – T3 AI Score', 'PG – T3 AI Feedback',
+  'PG – Task 4 (Other Bugs)', 'PG – T4 AI Score', 'PG – T4 AI Feedback',
   'PG – Time (s)', 'PG – Suspicious?',
 
   // ── Domain 9 : AI Prompting · 30 min · 0 MCQs · 4 tasks (14) ───
@@ -143,6 +145,8 @@ var FIELD_ORDER = [
   'domain_8_mcq_score', 'domain_8_mcq_answers',
   'domain_8_task_1', 'domain_8_task_1_score', 'domain_8_task_1_feedback',
   'domain_8_task_2', 'domain_8_task_2_score', 'domain_8_task_2_feedback',
+  'domain_8_task_3', 'domain_8_task_3_score', 'domain_8_task_3_feedback',
+  'domain_8_task_4', 'domain_8_task_4_score', 'domain_8_task_4_feedback',
   'domain_8_time_secs', 'domain_8_suspicious',
 
   // Domain 9 — AI Prompting
@@ -230,9 +234,9 @@ function formatHeaderRow(sheet) {
     sheet.setColumnWidth(i, 130);
   }
 
-  // Domains 1–8: task blocks start at col 19, repeat every 10 cols
+  // Domains 1–7: task blocks start at col 19, repeat every 10 cols
   // Per block: [task_answer(340), ai_score(80), ai_feedback(260), task_answer(340), ai_score(80), ai_feedback(260)]
-  for (var d = 0; d < 8; d++) {
+  for (var d = 0; d < 7; d++) {
     var base = 19 + d * 10; // 1-indexed column of task_1 answer for domain d+1
     sheet.setColumnWidth(base,     340); // task 1 answer
     sheet.setColumnWidth(base + 1,  80); // task 1 AI score
@@ -242,8 +246,16 @@ function formatHeaderRow(sheet) {
     sheet.setColumnWidth(base + 5, 260); // task 2 AI feedback
   }
 
-  // Domain 9 (AI Prompting): 4 tasks, starts at col 97
-  var aip = 97;
+  // Domain 8 (QA Playground): 4 tasks, starts at col 89
+  var pg = 89;
+  for (var t = 0; t < 4; t++) {
+    sheet.setColumnWidth(pg + t * 3,     340); // task answer
+    sheet.setColumnWidth(pg + t * 3 + 1,  80); // AI score
+    sheet.setColumnWidth(pg + t * 3 + 2, 260); // AI feedback
+  }
+
+  // Domain 9 (AI Prompting): 4 tasks, starts at col 103
+  var aip = 103;
   for (var t = 0; t < 4; t++) {
     sheet.setColumnWidth(aip + t * 3,     340); // task answer
     sheet.setColumnWidth(aip + t * 3 + 1,  80); // AI score

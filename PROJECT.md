@@ -34,9 +34,9 @@ logo.png          Starapps Studio logo
 | 6 | Root Cause Analysis | 3 | 2 | 26 |
 | 7 | Complex Systems | 3 | 2 | 26 |
 | 8 | AI in QA | 3 | 2 | 26 |
-| 9 | QA Playground *(30 min)* | 3 | 2 | 26 |
+| 9 | QA Playground *(30 min)* | 3 | 4 | 46 |
 | 10 | AI Prompting *(30 min)* | 0 | 4 | 40 |
-| | **Total** | | | **268** |
+| | **Total** | | | **288** |
 
 MCQ = 2 marks each. Open tasks = 0–10 each, reviewed by team.
 
