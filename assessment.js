@@ -33,46 +33,6 @@
       domain: 'Manual Testing',
       mcqs: [
         {
-          q: 'Which statement best describes the difference between verification and validation?',
-          options: [
-            'Verification is performed by developers; validation is performed by QA engineers',
-            'Verification confirms the product is built according to its specification; validation confirms it meets the user\'s actual need',
-            'Verification happens after release; validation happens before release',
-            'Verification tests performance; validation tests functionality',
-            'All of the above'
-          ]
-        },
-        {
-          q: 'A 5-minute smoke test passes on every new build before it reaches QA. What does this confirm?',
-          options: [
-            'All features in the build work correctly without defects',
-            'The build is stable enough for the team to begin detailed testing',
-            'No regression has occurred since the last release',
-            'The build is ready for deployment to production',
-            'All of the above'
-          ]
-        },
-        {
-          q: 'A developer says "I can\'t reproduce this." Which addition to your bug report would be most useful?',
-          options: [
-            'Raising the bug\'s priority so the team takes it more seriously',
-            'Re-testing three more times before escalating',
-            'Adding exact steps to reproduce, the environment and browser used, expected vs actual result, and a screen recording',
-            'Requesting the developer reproduce it on your machine with you present',
-            'All of the above'
-          ]
-        },
-        {
-          q: 'A numeric input field accepts values from 1 to 100. Using equivalence partitioning, which set of test values gives minimum but complete class coverage?',
-          options: [
-            '1, 50, 100 - the lower bound, a middle value, and the upper bound',
-            '0, 50, 101 - one value below the valid range, one valid value, one above the valid range',
-            '1, 2, 99, 100 - both boundaries plus their adjacent values',
-            '50 - a single representative value covers the valid partition',
-            'All of the above'
-          ]
-        },
-        {
           q: 'A developer fixes a bug in the checkout discount calculation. Which testing activity confirms the fix did not break anything else?',
           options: [
             'Retesting - run the specific test case that originally found the bug',
@@ -83,12 +43,12 @@
           ]
         },
         {
-          q: 'You have 200 test cases, 2 hours, and the release proceeds regardless. How do you select which 40 to run?',
+          q: 'Which statement best describes the difference between verification and validation?',
           options: [
-            'Run the 40 most recently written test cases - they cover the newest functionality',
-            'Run 40 randomly selected test cases to avoid bias',
-            'Prioritise test cases covering high-business-risk areas, code changed in this release, and critical user journeys - run these first',
-            'Run the 40 shortest test cases to maximise the number of checks within the time limit',
+            'Verification is performed by developers; validation is performed by QA engineers',
+            'Verification confirms the product is built according to its specification; validation confirms it meets the user\'s actual need',
+            'Verification happens after release; validation happens before release',
+            'Verification tests performance; validation tests functionality',
             'All of the above'
           ]
         },
@@ -103,7 +63,22 @@
           ]
         }
       ],
-      tasks: []
+      tasks: [
+        {
+          title: 'Triage a Critical Bug',
+          scenario: 'A customer filed this complaint: "I added 3 items to my cart, clicked Pay, it said \'Payment Successful\'... but then I was taken back to an empty cart. I checked my email – no order confirmation. I checked my bank – £47.99 was charged. This happened 20 minutes ago."',
+          question: 'You are the first QA to see this report.\n1. Assign Severity and Priority (and justify each)\n2. List the 3 most important things to include in the bug report\n3. Name the first 2 people or teams you would notify immediately and explain why',
+          placeholder: '1. Severity: ... because ...\n   Priority: ... because ...\n\n2. Bug report must-haves:\n   - ...\n   - ...\n   - ...\n\n3. Notify:\n   - [Team/Person]: because ...\n   - [Team/Person]: because ...',
+          evalPrompt: 'You are a senior QA engineer evaluating a bug triage response for a payment-taken but order-lost scenario. Score 0–10: severity and priority assignment are reasonable with justified reasoning — Critical/High severity appropriate given financial impact (3 pts); bug report content is relevant and practical — steps, expected vs actual, and transaction details (3 pts); escalation decisions show understanding of stakeholder impact — dev team, payments team, or customer support are all valid first contacts (4 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+        },
+        {
+          title: 'Write Test Cases for a Discount Code Feature',
+          scenario: 'A new feature allows users to apply a discount code at checkout.\nRules:\n- Code SAVE10 gives 10% off for all users\n- Code VIP20 gives 20% off for VIP users only; regular users see an error\n- A code can only be applied once per order\n- Codes are case-insensitive (save10 = SAVE10)',
+          question: 'Write 4 test cases for this feature.\nFor each test case include:\n- Test scenario (what you are testing)\n- Input / Action (what the user does)\n- Expected result',
+          placeholder: 'TC-01: Scenario: ...\n  Action: ...\n  Expected: ...\n\nTC-02: Scenario: ...\n  Action: ...\n  Expected: ...\n\nTC-03: Scenario: ...\n  Action: ...\n  Expected: ...\n\nTC-04: Scenario: ...\n  Action: ...\n  Expected: ...',
+          evalPrompt: 'You are a senior QA engineer evaluating test cases written for a discount code feature. Score 0–10: test case structure — does each test case have a clear scenario, action, and expected result? (3 pts); coverage quality — do the 4 test cases meaningfully cover different rules such as happy path, VIP restriction, single-use limit, and case-insensitivity? (5 pts); specificity — are expected results concrete rather than vague? (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
+        }
+      ]
     },
 
     /* ── 1. API TESTING ───────────────────────────────────────── */
@@ -112,42 +87,22 @@
       domain: 'API Testing',
       mcqs: [
         {
-          q: 'POST /api/orders returns 201 with the new order object. Which additional check is essential to confirm the order was actually saved?',
-          options: [
-            'Verify the response body contains a non-null id field',
-            'Confirm the HTTP status code is 201 Created',
-            'Send GET /api/orders/{id} and verify the record exists in the system',
-            'Verify the response time is under 500 ms',
-            'All of the above'
-          ]
-        },
-        {
-          q: 'An API response includes the header X-Rate-Limit-Used: 39/40. What does this mean?',
-          options: [
-            'You have 39 successful calls and 40 failed ones in the current window',
-            'You have 39 calls remaining before hitting the rate limit',
-            'You have used 39 of your 40 available calls -1 call remains before throttling',
-            'Your API key has a permanent daily limit of 40 calls',
-            'All of the above'
-          ]
-        },
-        {
-          q: 'A webhook for order completion consistently fails to fire during testing. What is the most useful first step?',
-          options: [
-            'Check the webhook delivery logs in the developer dashboard for error codes and HTTP responses',
-            'Verify your endpoint\'s SSL certificate is valid and trusted',
-            'Increase the webhook processing timeout on your server',
-            'Re-register the webhook with a different event to reset its delivery state',
-            'All of the above'
-          ]
-        },
-        {
           q: 'You test DELETE /api/products/9999 where that product does not exist. The API returns 404. A junior QA marks this "FAIL - expected 200". What is the correct expected status?',
           options: [
             '200 OK - delete operations always return a success code',
             '204 No Content - the resource is already gone, no content needed',
             '404 Not Found - the resource does not exist, which is the correct and expected response',
             '422 Unprocessable Entity - the product ID format is invalid',
+            'All of the above'
+          ]
+        },
+        {
+          q: 'POST /api/orders returns 201 with the new order object. Which additional check is essential to confirm the order was actually saved?',
+          options: [
+            'Verify the response body contains a non-null id field',
+            'Confirm the HTTP status code is 201 Created',
+            'Send GET /api/orders/{id} and verify the record exists in the system',
+            'Verify the response time is under 500 ms',
             'All of the above'
           ]
         },
@@ -186,12 +141,12 @@
       domain: 'Back-End Testing',
       mcqs: [
         {
-          q: 'A background job processes order events and updates a database. 97 of every 100 orders are updated. No errors in logs, the job exits with code 0. What is the most likely root cause?',
+          q: 'A test suite takes 45 minutes to run. The single highest-impact fix is:',
           options: [
-            'The event source is sending 3% of events to the wrong endpoint',
-            'A try/catch block is swallowing exceptions, allowing the job to skip those records and continue silently',
-            'The database is running out of connections and silently dropping 3% of writes',
-            'Rate limits on an upstream service are causing 3% of lookups to fail without throwing an error',
+            'Delete all tests that have ever failed intermittently',
+            'Reduce the number of assertions per test to speed up each test',
+            'Run tests that do not share state in parallel across multiple workers',
+            'Replace all integration tests with unit tests',
             'All of the above'
           ]
         },
@@ -206,32 +161,12 @@
           ]
         },
         {
-          q: 'Which approach gives the highest confidence that a refactored discount engine produces identical results to the original?',
+          q: 'A background job processes order events and updates a database. 97 of every 100 orders are updated. No errors in logs, the job exits with code 0. What is the most likely root cause?',
           options: [
-            'Running the existing unit tests - they all pass',
-            'Comparing outputs for the same inputs: original vs refactored, across 100+ scenarios with varied discount combinations',
-            'Verifying that code complexity has not changed - same cyclomatic complexity score',
-            'Deploying to a staging environment and manually testing 5 discount scenarios',
-            'All of the above'
-          ]
-        },
-        {
-          q: 'A test suite takes 45 minutes to run. The single highest-impact fix is:',
-          options: [
-            'Delete all tests that have ever failed intermittently',
-            'Reduce the number of assertions per test to speed up each test',
-            'Run tests that do not share state in parallel across multiple workers',
-            'Replace all integration tests with unit tests',
-            'All of the above'
-          ]
-        },
-        {
-          q: 'Under load testing at 50 concurrent requests, 2–3 requests fail with a database deadlock error. What is the actual root cause?',
-          options: [
-            'The database server cannot handle 50 concurrent connections at this tier',
-            'Two transactions are acquiring locks on the same rows in opposite order, causing them to block each other indefinitely',
-            'The event source is sending duplicate events that conflict at the database level',
-            'The connection pool is exhausted, causing requests to queue and time out',
+            'The event source is sending 3% of events to the wrong endpoint',
+            'A try/catch block is swallowing exceptions, allowing the job to skip those records and continue silently',
+            'The database is running out of connections and silently dropping 3% of writes',
+            'Rate limits on an upstream service are causing 3% of lookups to fail without throwing an error',
             'All of the above'
           ]
         }
@@ -270,16 +205,6 @@
           ]
         },
         {
-          q: 'You see "deadlock detected" repeated in production database logs after a new feature release. As a QA engineer, what is the most useful first action?',
-          options: [
-            'Increase the server timeout setting so the error stops appearing in logs',
-            'Note the error, identify which feature or user action triggers it, and raise a bug report with reproduction steps for the developer',
-            'Restart the database server to clear the stuck transactions',
-            'Ignore it since the system appears to have recovered on its own',
-            'All of the above'
-          ]
-        },
-        {
           q: 'A feature works perfectly in your test environment with 100 records, but times out for users in production with 500,000 records. What is the most likely explanation?',
           options: [
             'The test environment uses a different browser than production users',
@@ -296,16 +221,6 @@
             'One database operation is waiting for another to finish before it can access the same data, and it waited too long',
             'The database password has expired and the connection was rejected',
             'The query contains a syntax error and could not be understood by the database',
-            'All of the above'
-          ]
-        },
-        {
-          q: 'A developer plans to make a structural change to a live production database table that has millions of rows, during peak business hours. What concern should a QA engineer raise?',
-          options: [
-            'Database changes only affect new data and will never impact existing users',
-            'Structural changes on large live tables can cause temporary slowness or errors for users while the change is being applied',
-            'This is only a concern if the change affects the login page',
-            'Database migrations always complete instantly regardless of table size',
             'All of the above'
           ]
         }
@@ -334,16 +249,6 @@
       domain: 'Test Automation',
       mcqs: [
         {
-          q: 'An automated UI test fails in CI with "element not found" on a button that only appears after an async API call. It passes 100% locally. What is the correct fix?',
-          options: [
-            'Add a hardcoded sleep of 3 seconds before the click to give CI extra time',
-            'Use your framework\'s smart wait or built-in assertion retry — most tools will keep checking until the element is visible or the timeout is reached',
-            'Increase the global timeout to 60 seconds in your test config to accommodate slower CI runners',
-            'Wrap the click in a try/catch and retry up to 3 times with a 2-second pause between attempts',
-            'All of the above'
-          ]
-        },
-        {
           q: 'Which type of selector remains stable after an application update that renames CSS classes, restructures the DOM, and changes button text?',
           options: [
             'A CSS class selector like .add-to-cart-btn — tied directly to styling class names',
@@ -354,22 +259,12 @@
           ]
         },
         {
-          q: 'You have 30 flaky automated tests. Before deleting any, what is the most valuable first action?',
+          q: 'An automated UI test fails in CI with "element not found" on a button that only appears after an async API call. It passes 100% locally. What is the correct fix?',
           options: [
-            'Delete them immediately - flaky tests erode confidence and waste CI time',
-            'Mark all of them as skipped until you have time to investigate',
-            'Run each flaky test several times and categorise whether each one fails consistently or intermittently across runs',
-            'Add a hardcoded sleep to each flaky test as a quick stopgap fix',
-            'All of the above'
-          ]
-        },
-        {
-          q: 'A checkout E2E test passes in CI, but users report checkout is broken on mobile. What is the most likely reason?',
-          options: [
-            'The test environment uses a different app version than production',
-            'The test runs on a desktop viewport only and never tested mobile breakpoints or touch interactions',
-            'CI does not clear browser cookies between test runs, causing state leakage',
-            'CI runs tests sequentially instead of in parallel, masking timing-related failures',
+            'Add a hardcoded sleep of 3 seconds before the click to give CI extra time',
+            'Use your framework\'s smart wait or built-in assertion retry — most tools will keep checking until the element is visible or the timeout is reached',
+            'Increase the global timeout to 60 seconds in your test config to accommodate slower CI runners',
+            'Wrap the click in a try/catch and retry up to 3 times with a 2-second pause between attempts',
             'All of the above'
           ]
         },
@@ -408,26 +303,6 @@
       domain: 'Root Cause Analysis',
       mcqs: [
         {
-          q: 'A production bug cannot be reproduced in staging after 3 hours. Real users are still affected. What is your most valuable immediate action?',
-          options: [
-            'Close the ticket as "cannot reproduce" and raise alert thresholds to reduce noise until it recurs',
-            'Roll back the last deployment immediately to remove the suspected change',
-            'Add structured logging to the exact production code path and deploy to capture full context on the next occurrence',
-            'Systematically compare all differences between staging and production: config values, data volume, and feature flags',
-            'All of the above'
-          ]
-        },
-        {
-          q: 'Which 5-Whys chain correctly reaches the systemic root cause for "orders stopped syncing to the warehouse"?',
-          options: [
-            'Sync job crashed → server ran out of memory → root cause: add more RAM to the server',
-            'Sync job crashed → API rate limit hit → root cause: implement better throttling on API calls',
-            'API credentials expired → no automated alert on credential expiry → no rotation policy → root cause: no credential lifecycle management process',
-            'Sync job crashed → disk full → logs not rotated → no rotation policy → ops runbook missing → root cause: incomplete documentation',
-            'All of the above'
-          ]
-        },
-        {
           q: 'A checkout bug occurs on iOS 16 Safari only - works on Android Chrome and iOS 15 Safari. What is the most targeted first investigation step?',
           options: [
             'Test every device and browser combination in a cloud testing tool to map the full blast radius',
@@ -448,12 +323,12 @@
           ]
         },
         {
-          q: 'A post-mortem reveals: a config change was pushed without review → the database connection limit was set to 2 → 89% of payment requests failed for 47 minutes. Which is the most complete set of contributing factors?',
+          q: 'Which 5-Whys chain correctly reaches the systemic root cause for "orders stopped syncing to the warehouse"?',
           options: [
-            'No config review process + no config validation in CI + no staging test of the config change before production deployment',
-            'The developer made a typo and the connection limit was configured too low',
-            'No automated tests for configuration values + alerting fired too slowly',
-            'The deployment pipeline lacked a rollback mechanism for configuration-only changes',
+            'Sync job crashed → server ran out of memory → root cause: add more RAM to the server',
+            'Sync job crashed → API rate limit hit → root cause: implement better throttling on API calls',
+            'API credentials expired → no automated alert on credential expiry → no rotation policy → root cause: no credential lifecycle management process',
+            'Sync job crashed → disk full → logs not rotated → no rotation policy → ops runbook missing → root cause: incomplete documentation',
             'All of the above'
           ]
         }
@@ -482,32 +357,12 @@
       domain: 'Complex Systems',
       mcqs: [
         {
-          q: 'Your app calls a third-party payment service that has degraded to 12-second response times. Which single pattern most directly prevents your app from becoming unresponsive?',
-          options: [
-            'Add retry with exponential backoff - failed calls will eventually succeed once the service recovers',
-            'Implement a circuit breaker - after a set number of failures it stops calling the service and returns a fallback immediately instead of waiting 12 s',
-            'Increase the HTTP timeout from 10 s to 30 s to accommodate the degraded service',
-            'Add a health-check endpoint to the payment service that your app polls every second before making any calls',
-            'All of the above'
-          ]
-        },
-        {
           q: 'An order appears in the Orders service immediately after creation but is missing in the warehouse system for 10–15 seconds, with no errors in any logs. Which explanation is most consistent with this evidence?',
           options: [
             'The warehouse system has an intermittent bug that drops write operations under load',
             'The order event is propagating asynchronously - this is expected eventual consistency behaviour; the write succeeded and the data is in transit',
             'The webhook fired before the order was fully committed to the primary database',
             'The warehouse API is throttling the Orders service and silently dropping some inbound requests',
-            'All of the above'
-          ]
-        },
-        {
-          q: 'What does "observability" specifically mean when testing a backend app with several microservices?',
-          options: [
-            'The ability to monitor real-time CPU and memory dashboards for each service',
-            'The ability to toggle feature flags to isolate each service\'s behaviour independently',
-            'The ability to reconstruct exactly what happened during a production failure using only logs, metrics, and distributed traces - without needing to reproduce it',
-            'The ability to run automated regression tests against each service in complete isolation',
             'All of the above'
           ]
         },
@@ -522,12 +377,12 @@
           ]
         },
         {
-          q: 'During a gradual traffic migration from a monolith to microservices, some users see inconsistent totals between the two systems. No errors anywhere. What is the most likely root cause?',
+          q: 'Your app calls a third-party payment service that has degraded to 12-second response times. Which single pattern most directly prevents your app from becoming unresponsive?',
           options: [
-            'The traffic split is random - some users are hitting both systems within the same session',
-            'The two systems calculate discounts using different rounding rules or apply promotions in a different order',
-            'The new microservice is not yet optimised for its share of production traffic',
-            'Session cookies are routing some users inconsistently between the two systems',
+            'Add retry with exponential backoff - failed calls will eventually succeed once the service recovers',
+            'Implement a circuit breaker - after a set number of failures it stops calling the service and returns a fallback immediately instead of waiting 12 s',
+            'Increase the HTTP timeout from 10 s to 30 s to accommodate the degraded service',
+            'Add a health-check endpoint to the payment service that your app polls every second before making any calls',
             'All of the above'
           ]
         }
@@ -558,26 +413,6 @@
       domain: 'AI in QA',
       mcqs: [
         {
-          q: 'An AI-powered product description generator scores 94% accuracy on your test set. Which critical risk does this metric alone NOT address?',
-          options: [
-            'Whether the generator correctly uses the product title and category as input',
-            'Whether the generator handles products with very short titles or no existing description',
-            'Whether the generator produces harmful, misleading, or brand-unsafe content for products not in your test set',
-            'Whether the generator is fast enough for the expected UI response time',
-            'All of the above'
-          ]
-        },
-        {
-          q: 'What makes testing an AI tagging feature fundamentally different from testing a traditional rule-based tagger?',
-          options: [
-            'AI inference is slow, making the test suite significantly longer to run',
-            'AI requires cloud APIs, making fully local test infrastructure impractical',
-            'AI is non-deterministic - the same input can produce different outputs on different runs, making exact-match assertions unreliable',
-            'AI models communicate via REST APIs, which require different tooling than library-based code',
-            'All of the above'
-          ]
-        },
-        {
           q: 'A chatbot gave a customer incorrect information about the return policy. Which test approach would best catch this before production?',
           options: [
             'Unit tests for the API endpoint that calls the LLM',
@@ -588,12 +423,12 @@
           ]
         },
         {
-          q: 'Which is the most reliable way to evaluate whether a new AI model version outperforms the current one for customer support responses?',
+          q: 'An AI-powered product description generator scores 94% accuracy on your test set. Which critical risk does this metric alone NOT address?',
           options: [
-            'Ask the development team to read 100 sample responses and vote on which version is better',
-            'Compare average response times - the faster model is better suited for production',
-            'Use LLM-as-judge: a more capable model scores responses from both versions against curated reference answers with defined evaluation criteria',
-            'Count how many responses are under 200 words - conciseness signals better comprehension',
+            'Whether the generator correctly uses the product title and category as input',
+            'Whether the generator handles products with very short titles or no existing description',
+            'Whether the generator produces harmful, misleading, or brand-unsafe content for products not in your test set',
+            'Whether the generator is fast enough for the expected UI response time',
             'All of the above'
           ]
         },
@@ -634,16 +469,6 @@
       timerSecs: 1800,    /* 30 minutes */
       mcqs: [
         {
-          q: 'You find "Smart Watch Pro" labeled "Out of Stock" on the Products page. What happens when you click its "Add to Cart" button?',
-          options: [
-            'The button is greyed out and unclickable',
-            'A toast says "Item currently unavailable"',
-            'The item is added to your cart successfully',
-            'A modal appears asking you to join a waitlist',
-            'The page shows an error: "Cannot add out-of-stock items"'
-          ]
-        },
-        {
           q: 'You type "qatester" (no @ symbol, no domain) into the Email field of the Contact form and click "Send Message." What happens?',
           options: [
             'A red border appears with "Invalid email address"',
@@ -651,26 +476,6 @@
             'The Send button stays disabled until a valid email is entered',
             'A browser tooltip says "Please include an @ in the email address"',
             'Nothing happens - the form silently fails'
-          ]
-        },
-        {
-          q: 'You apply discount code "SAVE15." The API Monitor shows: {"success": true, "discount": 0.15}. What does the cart total show after applying?',
-          options: [
-            'The total is reduced by 15%',
-            'The total is reduced by a flat $15.00',
-            'An error: "Invalid discount code"',
-            'A "Discount Applied! Save 15%" badge appears but the cart total is unchanged',
-            'The page refreshes and shows the new discounted total'
-          ]
-        },
-        {
-          q: 'You select "Price: Low to High." The four product prices are $49.99, $129.99, $29.99, and $12.99. What order appears?',
-          options: [
-            '$12.99, $29.99, $49.99, $129.99',
-            '$12.99, $129.99, $29.99, $49.99',
-            '$29.99, $49.99, $129.99, $12.99',
-            '$129.99, $49.99, $29.99, $12.99',
-            'The order does not change from the default'
           ]
         },
         {
@@ -691,26 +496,6 @@
             '408 Request Timeout',
             '401 Unauthorized with {"error": "Session expired", "code": "SESSION_EXPIRED"}',
             'No entry in the API Monitor - the request was never sent'
-          ]
-        },
-        {
-          q: 'Your cart has one item: Wireless Headphones ($49.99). Cart shows Subtotal: $49.99, Shipping: Free, Total: $51.99. What is the most likely cause?',
-          options: [
-            'A 4% sales tax is automatically applied to all orders',
-            'A currency conversion fee was added based on your locale',
-            'A $2.00 handling fee is added to the total but not shown as a line item',
-            'A floating point rounding error is causing the $2.00 discrepancy',
-            'The discount code added a credit that was then automatically reversed'
-          ]
-        },
-        {
-          q: 'You click "Add to Cart" on a product. The API Monitor logs the call to GET /api/products/detail. What HTTP status code is shown?',
-          options: [
-            '200 OK - standard success response for a read request',
-            '201 Created - the status code returned by this GET endpoint',
-            '204 No Content - server returned an empty body',
-            '302 Found - the request was redirected',
-            '404 Not Found - the product detail endpoint does not exist'
           ]
         }
       ],
@@ -737,7 +522,38 @@
       id: 9,
       domain: 'AI Prompting',
       timerSecs: 1800,    /* 30 minutes */
-      mcqs: [],
+      mcqs: [
+        {
+          q: 'Which element of a prompt most directly controls whether an AI returns output in a specific format?',
+          options: [
+            'Setting a higher temperature so the model is more creative',
+            'Making the prompt longer to give more context',
+            'Explicitly stating the required format — e.g. "Return JSON: {score: N, feedback: \'...\'}"',
+            'Using a system prompt to set the AI persona',
+            'All of the above'
+          ]
+        },
+        {
+          q: 'A QA engineer prompts an AI: "Write test cases for the login page." The output contains only 5 happy-path cases. Which single change to the prompt would most improve coverage?',
+          options: [
+            'Adding "be thorough and comprehensive" to the prompt',
+            'Asking for more output with "write as many test cases as possible"',
+            'Specifying required coverage areas explicitly: "Include: (1) successful login, (2) wrong password, (3) locked account, (4) empty fields, (5) SQL injection"',
+            'Breaking it into two prompts: one for positive and one for negative cases',
+            'All of the above'
+          ]
+        },
+        {
+          q: 'An LLM-as-judge evaluator consistently scores verbose, formal-sounding responses higher than concise but technically correct ones. This is an example of:',
+          options: [
+            'Hallucination — the model is producing false quality signals',
+            'Prompt injection — a candidate has manipulated the system prompt',
+            'Evaluation bias — the model correlates surface style features with quality instead of correctness',
+            'Context overflow — long responses exceed the model\'s attention span',
+            'All of the above'
+          ]
+        }
+      ],
       tasks: [
         {
           title: 'Prompt for Test Case Generation',
@@ -745,20 +561,6 @@
           question: 'Write the exact prompt you would give an AI tool to generate a comprehensive set of test cases for this feature.\n\nYour prompt should produce output that covers positive paths, negative paths, and edge cases.\n\nWrite the full prompt text — exactly as you would paste it into an AI tool.',
           placeholder: 'Your prompt:\n...',
           evalPrompt: 'You are a senior QA engineer evaluating an AI prompt written to generate test cases for a password reset feature. Score 0–10: context quality — does the prompt provide the feature rules and constraints clearly enough for AI to generate relevant tests without guessing? (3 pts); coverage intent — does the prompt explicitly ask for positive, negative, and edge case coverage rather than just "test cases"? (3 pts); output guidance — does the prompt specify an expected format, structure, or level of detail for the output? (2 pts); role/framing — does the prompt set a useful context such as giving AI a QA persona or specifying the purpose? (2 pts). Judge the quality of the prompt itself, not QA knowledge. Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
-        },
-        {
-          title: 'Prompt to Improve a Vague Bug Report',
-          scenario: 'A junior QA on your team filed this bug report:\n\n"Title: Checkout is broken\nSteps: I clicked something and it didn\'t work.\nPriority: medium"\n\nYou want to use AI to help transform this into a professional, complete bug report.',
-          question: 'Write the prompt you would give an AI to improve this report.\n\nYour prompt should include the original vague report and instruct the AI to produce a complete, professional version with all the sections a good bug report needs.\n\nWrite the full prompt text.',
-          placeholder: 'Your prompt:\n...',
-          evalPrompt: 'You are a senior QA engineer evaluating an AI prompt written to improve a vague bug report. Score 0–10: does the prompt include the original vague report as input so the AI has something to work with? (2 pts); does the prompt clearly tell the AI what a complete bug report should contain — title, steps to reproduce, expected vs actual, severity, environment, etc.? (4 pts); output clarity — does the prompt ask for a specific, usable output rather than a general review? (2 pts); tone/instruction quality — is the prompt clear, specific, and well-structured? (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
-        },
-        {
-          title: 'Prompt to Plan an Exploratory Testing Session',
-          scenario: 'You are about to spend 45 minutes exploratory-testing a new "Bulk CSV Import" feature in a CRM app. It lets users upload a CSV file to import up to 1,000 contacts at once. No test cases exist yet.',
-          question: 'Write the prompt you would give an AI to help you plan this exploratory testing session.\n\nYour prompt should get you a structured, actionable guide — covering what areas to test, what risks to look for, and what edge cases to prioritise in your 45 minutes.\n\nWrite the full prompt text.',
-          placeholder: 'Your prompt:\n...',
-          evalPrompt: 'You are a senior QA engineer evaluating an AI prompt written to plan a 45-minute exploratory testing session for a CSV import feature. Score 0–10: feature description — does the prompt give AI enough context about the feature (CSV, 1000 contacts, CRM, no existing test cases) to produce relevant suggestions? (3 pts); session framing — does the prompt mention the time constraint and ask for a structured, prioritised guide rather than a generic list? (3 pts); coverage breadth — does the prompt ask for risk areas, edge cases, or specific things to check, showing the candidate knows what good exploratory testing looks like? (2 pts); output format — does the prompt specify how the output should be structured so it is immediately usable? (2 pts). Return JSON: {"score": N, "feedback": "2–3 sentence summary"}.'
         },
         {
           title: 'Prompt to Diagnose a Flaky Test',
@@ -778,16 +580,16 @@
      Index: 0=A, 1=B, 2=C, 3=D, 4=E
      ───────────────────────────────────────────────────────────── */
   var _K = [
-    [242,  5, 23, 39, 54, 74, 88],         /* domain 0: Manual Testing        B,B,C,B,B,C,B         */
-    [ 16, 33, 52, 71, 87],                 /* domain 1: API Testing            C,C,A,C,B             */
-    [ 48, 64, 82,102,116],                 /* domain 2: Back-End Testing       B,C,B,C,B             */
-    [ 81, 96,115,130,149],                 /* domain 3: DB Log Reading         B,B,B,B,B             */
-    [110,130,147,163,179],                 /* domain 4: Test Automation        B,C,C,B,A             */
-    [141,157,177,195,210],                 /* domain 5: Root Cause Analysis    D,C,B,C,A             */
-    [172,191,205,225,240],                 /* domain 6: Complex Systems        B,B,C,B,B             */
-    [206,223,239,253, 17],                 /* domain 7: AI in QA               C,C,B,C,B             */
-    [233,253, 14, 31, 46, 67, 83, 99],     /* domain 8: QA Playground          C,B,D,B,B,D,C,B       */
-    []                                     /* domain 9: AI Prompting           no MCQs               */
+    [242,   5,  20],  /* domain 0: Manual Testing      B,B,B */
+    [ 16,  33,  53],  /* domain 1: API Testing          C,C,B */
+    [ 51,  64,  82],  /* domain 2: Back-End Testing     C,C,B */
+    [ 81,  96, 115],  /* domain 3: DB Log Reading       B,B,B */
+    [109, 129, 145],  /* domain 4: Test Automation      C,B,A */
+    [143, 157, 178],  /* domain 5: Root Cause Analysis  B,C,C */
+    [172, 191, 206],  /* domain 6: Complex Systems      B,B,B */
+    [205, 223, 239],  /* domain 7: AI in QA             B,C,B */
+    [234, 253,  14],  /* domain 8: QA Playground        B,B,D */
+    [  8,  25,  46],  /* domain 9: AI Prompting         C,C,C */
   ];
 
   function _dec(di, mi) {
@@ -819,6 +621,7 @@
 
   var _idx         = 0;
   var _deadline    = 0;
+  var _step        = 0;      /* current step within a domain: 0=MCQs, 1=Task1, 2=Task2 */
   var _timer       = null;
   var _watchdog    = null;   /* recursive timeout - survives clearInterval bruteforce */
   var _domainStart = 0;
@@ -905,6 +708,7 @@
   /* ── Render domain ─────────────────────────────────────────── */
   function renderDomain(idx) {
     var domain = _D[idx];
+    _step = 0;
 
     /* Split-screen toggle for QA Playground */
     if (domain.playground) { setupSplitMode(); }
@@ -1030,12 +834,7 @@
       })(ti));
     });
 
-    /* Submit button */
-    var _submitBtnEl = document.getElementById('submitBtn');
-    _submitBtnEl.onclick = function () { submitDomain(false); };
-    _submitBtnEl.innerHTML = (_idx >= _D.length - 1)
-      ? 'Submit Assessment'
-      : 'Submit &amp; Next Domain →';
+    /* Submit button — wired by _renderStep */
 
     /* ── Resume or start timer ─────────────────────────────────────
        Persist the deadline in sessionStorage so the back-button
@@ -1070,14 +869,89 @@
     var _splitAt = document.getElementById('splitAutoTime');
     if (_splitAt) _splitAt.textContent = _autoTimeStr;
 
+    _renderStep();
     startTimer(_savedDeadline > _now() ? _savedDeadline : 0);
-    /* In split mode the left panel scrolls independently; in normal mode scroll the window */
+  }
+
+  /* ── Step renderer (MCQs → Task 1 → Task 2 within one domain timer) ── */
+  function _renderStep() {
+    var domain = _D[_idx];
+    var mcqHdr = document.getElementById('mcqSectionHeader');
+    var mcqEl  = document.getElementById('mcqContainer');
+    var tskHdr = document.getElementById('taskSectionHeader');
+    var taskEl = document.getElementById('taskContainer');
+    var btn    = document.getElementById('submitBtn');
+
+    var totalSteps = 1 + domain.tasks.length; /* step 0 = MCQs, steps 1..n = tasks */
+
+    if (_step === 0) {
+      /* Show MCQ section */
+      if (mcqHdr) mcqHdr.style.display = domain.mcqs.length ? '' : 'none';
+      if (mcqEl)  mcqEl.style.display  = domain.mcqs.length ? '' : 'none';
+      if (tskHdr) tskHdr.style.display = 'none';
+      if (taskEl) taskEl.style.display = 'none';
+
+      if (domain.tasks.length > 0) {
+        btn.innerHTML = 'Continue to Written Tasks &rarr;';
+        btn.disabled  = false;
+        btn.onclick   = function () { _advanceStep(); };
+      } else {
+        btn.innerHTML = (_idx >= _D.length - 1) ? 'Submit Assessment' : 'Submit &amp; Next Domain &rarr;';
+        btn.disabled  = false;
+        btn.onclick   = function () { submitDomain(false); };
+      }
+    } else {
+      /* Show one task at a time */
+      var taskIdx = _step - 1;
+      if (mcqHdr) mcqHdr.style.display = 'none';
+      if (mcqEl)  mcqEl.style.display  = 'none';
+      if (tskHdr) {
+        tskHdr.style.display = '';
+        var tTitle = tskHdr.querySelector('.section-title');
+        if (tTitle) tTitle.textContent = 'Written Task ' + _step + ' of ' + domain.tasks.length;
+        var tSub = tskHdr.querySelector('.section-sub');
+        if (tSub) tSub.textContent = 'Write your answer in the text area below.';
+      }
+      if (taskEl) {
+        taskEl.style.display = '';
+        var blocks = taskEl.querySelectorAll('.task-block');
+        blocks.forEach(function (b, i) {
+          b.style.display = (i === taskIdx) ? '' : 'none';
+        });
+      }
+
+      var isLastStep = (_step >= domain.tasks.length);
+      if (isLastStep) {
+        btn.innerHTML = (_idx >= _D.length - 1) ? 'Submit Assessment' : 'Submit &amp; Next Domain &rarr;';
+        btn.disabled  = false;
+        btn.onclick   = function () { submitDomain(false); };
+      } else {
+        btn.innerHTML = 'Continue &rarr;';
+        btn.disabled  = false;
+        btn.onclick   = function () { _advanceStep(); };
+      }
+    }
+
+    /* Scroll to top of content */
     if (document.body.classList.contains('split-mode')) {
       var _card = document.getElementById('assessmentCard');
       if (_card) _card.scrollTop = 0;
     } else {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }
+
+  function _advanceStep() {
+    var card = document.getElementById('assessmentCard');
+    if (card) {
+      card.style.transition = 'opacity 0.15s';
+      card.style.opacity    = '0';
+    }
+    setTimeout(function () {
+      _step++;
+      _renderStep();
+      if (card) card.style.opacity = '1';
+    }, 150);
   }
 
   /* ── Timer ─────────────────────────────────────────────────────
