@@ -1,6 +1,7 @@
 # ── Secrets & local config ──────────────────────────────────
 config.js
 answers.md
+sheets-receiver.gs
 
 # ── Editor / tool artifacts ──────────────────────────────────
 .claude/
