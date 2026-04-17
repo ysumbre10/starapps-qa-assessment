@@ -933,18 +933,21 @@
   function _getSteps(domain) {
     var steps = [];
     var n = domain.mcqs.length;
-    /* MCQs in chunks of 2 */
-    for (var i = 0; i < n; i += 2) {
-      steps.push({ type: 'mcqs', from: i, to: Math.min(i + 2, n) });
+    /* Manual Testing (10 MCQs, no tasks): paginate 2 per page */
+    if (n > 5) {
+      for (var i = 0; i < n; i += 2) {
+        steps.push({ type: 'mcqs', from: i, to: Math.min(i + 2, n) });
+      }
+      return steps;
     }
-    /* One task per step */
-    domain.tasks.forEach(function (t, ti) {
-      steps.push({ type: 'task', idx: ti });
-    });
+    /* All other domains: show everything (MCQs + tasks) on one page */
+    steps.push({ type: 'all' });
     return steps;
   }
 
-  /* ── Step renderer: shows 2 MCQs per page, then 1 task per page ── */
+  /* ── Step renderer ─────────────────────────────────────────────
+     Manual Testing: 2 MCQs per page (5 pages).
+     All other domains: all MCQs + all tasks on a single page.    */
   function _renderStep() {
     var domain = _D[_idx];
     var steps  = _getSteps(domain);
@@ -956,44 +959,58 @@
     var btn    = document.getElementById('submitBtn');
     var isLast = (_step >= steps.length - 1);
 
-    if (cur.type === 'mcqs') {
+    if (cur.type === 'all') {
+      /* ── Single-page mode: show all MCQs + all tasks ── */
+      if (mcqHdr) mcqHdr.style.display = domain.mcqs.length ? '' : 'none';
+      if (mcqEl)  mcqEl.style.display  = domain.mcqs.length ? '' : 'none';
+
+      /* Show every mcq-block */
+      if (mcqEl) {
+        mcqEl.querySelectorAll('.mcq-block').forEach(function (b) {
+          b.style.display = '';
+        });
+      }
+      /* Reset sub-text */
+      var mcqSub = mcqHdr ? mcqHdr.querySelector('.section-sub') : null;
+      if (mcqSub) mcqSub.textContent = 'Select the best answer for each question.';
+
+      if (domain.tasks.length > 0) {
+        if (tskHdr) {
+          tskHdr.style.display = '';
+          var tTitle = tskHdr.querySelector('.section-title');
+          if (tTitle) tTitle.textContent = 'Open Tasks';
+          var tSub = tskHdr.querySelector('.section-sub');
+          if (tSub) tSub.textContent = 'Write your answer in the text area below.';
+        }
+        if (taskEl) {
+          taskEl.style.display = '';
+          taskEl.querySelectorAll('.task-block').forEach(function (b) {
+            b.style.display = '';
+          });
+        }
+      } else {
+        if (tskHdr) tskHdr.style.display = 'none';
+        if (taskEl) taskEl.style.display = 'none';
+      }
+
+    } else if (cur.type === 'mcqs') {
+      /* ── Paginated MCQ mode (Manual Testing only) ── */
       if (mcqHdr) mcqHdr.style.display = '';
       if (mcqEl)  mcqEl.style.display  = '';
       if (tskHdr) tskHdr.style.display = 'none';
       if (taskEl) taskEl.style.display = 'none';
 
       /* Show only the mcq-blocks in this chunk */
-      var blocks = mcqEl.querySelectorAll('.mcq-block');
-      blocks.forEach(function (b, i) {
-        b.style.display = (i >= cur.from && i < cur.to) ? '' : 'none';
-      });
+      if (mcqEl) {
+        mcqEl.querySelectorAll('.mcq-block').forEach(function (b, i) {
+          b.style.display = (i >= cur.from && i < cur.to) ? '' : 'none';
+        });
+      }
 
       /* Update section sub-text with question range */
-      var mcqSub = mcqHdr ? mcqHdr.querySelector('.section-sub') : null;
-      if (mcqSub) {
-        if (domain.mcqs.length > 2) {
-          mcqSub.textContent = 'Questions ' + (cur.from + 1) + '\u2013' + cur.to + ' of ' + domain.mcqs.length + '. Select the best answer for each.';
-        } else {
-          mcqSub.textContent = 'Select the best answer for each question.';
-        }
-      }
-    } else {
-      /* Task step */
-      if (mcqHdr) mcqHdr.style.display = 'none';
-      if (mcqEl)  mcqEl.style.display  = 'none';
-      if (tskHdr) {
-        tskHdr.style.display = '';
-        var tTitle = tskHdr.querySelector('.section-title');
-        if (tTitle) tTitle.textContent = 'Written Task ' + (cur.idx + 1) + ' of ' + domain.tasks.length;
-        var tSub = tskHdr.querySelector('.section-sub');
-        if (tSub) tSub.textContent = 'Write your answer in the text area below.';
-      }
-      if (taskEl) {
-        taskEl.style.display = '';
-        var tblocks = taskEl.querySelectorAll('.task-block');
-        tblocks.forEach(function (b, i) {
-          b.style.display = (i === cur.idx) ? '' : 'none';
-        });
+      var mcqSub2 = mcqHdr ? mcqHdr.querySelector('.section-sub') : null;
+      if (mcqSub2) {
+        mcqSub2.textContent = 'Questions ' + (cur.from + 1) + '\u2013' + cur.to + ' of ' + domain.mcqs.length + '. Select the best answer for each.';
       }
     }
 
@@ -1003,14 +1020,9 @@
       btn.disabled  = false;
       btn.onclick   = function () { submitDomain(false); };
     } else {
-      var nextStep = steps[_step + 1];
-      if (cur.type === 'mcqs' && nextStep && nextStep.type === 'task') {
-        btn.innerHTML = 'Continue to Written Tasks &rarr;';
-      } else {
-        btn.innerHTML = 'Continue &rarr;';
-      }
-      btn.disabled = false;
-      btn.onclick  = function () { _advanceStep(); };
+      btn.innerHTML = 'Continue &rarr;';
+      btn.disabled  = false;
+      btn.onclick   = function () { _advanceStep(); };
     }
 
     /* Scroll to top */
